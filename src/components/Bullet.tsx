@@ -74,13 +74,17 @@ export function Bullet({ startX, startY, getBirdX, onHit, onMiss }: BulletProps)
 
   return (
     <g ref={bulletRef} transform={`translate(${startX}, 0)`}>
-      {/* Bullet body */}
-      <ellipse cx="0" cy="0" rx="3" ry="6" fill="#333" />
-      {/* Bullet tip */}
-      <path d="M -3 0 L 0 -8 L 3 0" fill="#8B8B8B" />
-      {/* Muzzle flash effect (trails behind) */}
-      <ellipse cx="0" cy="8" rx="2" ry="4" fill="#FFA500" opacity="0.6" />
-      <ellipse cx="0" cy="12" rx="1" ry="2" fill="#FF6600" opacity="0.4" />
+      {/* Bullet — Cubist faceted angular shard */}
+      {/* Main body — dark quadrilateral */}
+      <polygon points="-3,6 -4,-2 0,-4 4,-2 3,6" fill="#2A2A3A" stroke="#111" strokeWidth="2" />
+      {/* Left face — lighter plane (Cubist light source) */}
+      <polygon points="-4,-2 -3,6 0,2 0,-4" fill="#4A4A5A" />
+      {/* Tip — angular diamond */}
+      <polygon points="-3,-2 0,-9 3,-2" fill="#C0C0C0" stroke="#111" strokeWidth="1.5" />
+      {/* Propellant trail — angular ochre wedge */}
+      <polygon points="-2,6 0,14 2,6" fill="#D4A820" opacity="0.7" />
+      {/* Trailing heat — crimson angular sliver */}
+      <polygon points="-1,12 0,18 1,12" fill="#8B1A1A" opacity="0.5" />
     </g>
   );
 }

@@ -15,6 +15,80 @@ interface HumanProps {
 
 type ViewState = 'side' | 'front' | 'shooting' | 'vomiting' | 'crying' | 'running';
 
+// ---------------------------------------------------------------------------
+// Picasso cubist head helpers
+// ---------------------------------------------------------------------------
+
+/** Profile head facing right with a frontal eye — the classic Picasso move. */
+function PicassoSideHead({ transform }: { transform?: string }) {
+  return (
+    <g transform={transform}>
+      {/* Head polygon — profile shape */}
+      <polygon points="-4,0 -2,-12 8,-14 14,-8 14,4 8,10 -2,8" fill="#E8C49A" stroke="#111" strokeWidth="2" />
+      {/* Shadow plane — rear third of face */}
+      <polygon points="-4,0 -2,-12 4,-12 2,8 -2,8" fill="#C49060" />
+      {/* Angular hair cap */}
+      <polygon points="-4,-8 -2,-14 10,-16 14,-10 10,-12 0,-13" fill="#5D3010" stroke="#111" strokeWidth="1.5" />
+      {/* Ear — small diamond */}
+      <polygon points="-5,-2 -8,0 -5,4 -2,2" fill="#C49060" stroke="#111" strokeWidth="1" />
+      {/* Eye — frontal almond placed on profile temple (Picasso simultaneity) */}
+      <polygon points="4,-8 8,-10 12,-7 8,-4" fill="#F5ECD7" stroke="#111" strokeWidth="1.5" />
+      <circle cx="8" cy="-7" r="2" fill="#111" />
+      <circle cx="8.8" cy="-7.5" r="0.6" fill="#F5ECD7" />
+      {/* Nose — angular L on profile edge */}
+      <polyline points="14,-8 18,-4 15,-2" stroke="#C49060" strokeWidth="2" fill="none" strokeLinejoin="miter" />
+      {/* Mouth — bold horizontal slash */}
+      <line x1="12" y1="4" x2="16" y2="3" stroke="#8B1A1A" strokeWidth="2.5" strokeLinecap="round" />
+    </g>
+  );
+}
+
+/** Front-facing head with two eyes on split geometric planes — Cubist simultaneity. */
+function PicassoFrontHead({ transform }: { transform?: string }) {
+  return (
+    <g transform={transform}>
+      {/* Left plane (profile-ish, darker) */}
+      <polygon points="0,-12 -10,-8 -10,8 0,10" fill="#C49060" stroke="#111" strokeWidth="2" />
+      {/* Right plane (frontal, lighter) */}
+      <polygon points="0,-12 10,-10 10,8 0,10" fill="#E8C49A" stroke="#111" strokeWidth="2" />
+      {/* Angular hair band */}
+      <polygon points="-10,-8 -8,-14 0,-16 8,-14 10,-10 4,-12 -4,-12" fill="#5D3010" stroke="#111" strokeWidth="1.5" />
+      {/* Left eye — oddly placed, profile-ish */}
+      <polygon points="-8,-4 -4,-6 -2,-3 -6,-1" fill="#F5ECD7" stroke="#111" strokeWidth="1.5" />
+      <circle cx="-5" cy="-4" r="1.5" fill="#111" />
+      {/* Right eye — frontal almond */}
+      <polygon points="2,-6 6,-8 10,-5 6,-2" fill="#F5ECD7" stroke="#111" strokeWidth="1.5" />
+      <circle cx="6" cy="-5" r="1.5" fill="#111" />
+      {/* Nose — angular V */}
+      <polyline points="-1,-2 0,4 2,-2" stroke="#C49060" strokeWidth="1.5" fill="none" />
+      {/* Mouth — angular W-shape */}
+      <polyline points="-5,7 -2,5 0,8 2,5 5,7" stroke="#8B1A1A" strokeWidth="2" fill="none" strokeLinejoin="round" />
+    </g>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Shared suit body (side profile)
+// ---------------------------------------------------------------------------
+function SuitBody() {
+  return (
+    <>
+      {/* Cobalt angular jacket — irregular quadrilateral */}
+      <polygon points="-6,-14 8,-14 10,8 -8,8" fill="#1A3A7A" stroke="#111" strokeWidth="2" />
+      {/* Lapel shadow facet */}
+      <polygon points="-6,-14 -2,-14 0,-6 -8,2" fill="#0E2456" stroke="#111" strokeWidth="1" />
+      {/* Collar — cream triangle */}
+      <polygon points="-2,-14 2,-10 6,-14" fill="#F5ECD7" stroke="#111" strokeWidth="1.5" />
+      {/* Tie — angular strip */}
+      <polygon points="1,-10 3,6 -1,6" fill="#8B1A1A" stroke="#111" strokeWidth="1" />
+    </>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Component
+// ---------------------------------------------------------------------------
+
 export function Human({
   x,
   y,
@@ -44,7 +118,6 @@ export function Human({
         walkingTlRef.current.pause();
       }
     } else if (viewState === 'vomiting' || viewState === 'crying' || viewState === 'running') {
-      // Reaction ended, return to side view
       setViewState('side');
       if (walkingTlRef.current && isPlaying) {
         walkingTlRef.current.play();
@@ -54,7 +127,7 @@ export function Human({
 
   // Handle shooting state
   useEffect(() => {
-    if (humanReaction !== 'none') return; // Reactions take priority
+    if (humanReaction !== 'none') return;
     if (humanState === 'shooting' && viewState !== 'front') {
       setViewState('shooting');
       if (walkingTlRef.current) {
@@ -71,54 +144,42 @@ export function Human({
   // Handle direction change with turn animation
   useEffect(() => {
     if (prevDirectionRef.current !== direction && isPlaying && humanState !== 'shooting') {
-      // Direction changed - play turn animation
       setViewState('front');
-
-      // Kill walking animation during turn
       if (walkingTlRef.current) {
         walkingTlRef.current.pause();
       }
-
-      // After pause, switch to new direction and resume
       const turnTimeout = setTimeout(() => {
         setCurrentDirection(direction);
         setViewState('side');
         if (walkingTlRef.current && isPlaying) {
           walkingTlRef.current.play();
         }
-      }, 500); // 0.5 second pause while facing camera
-
+      }, 500);
       prevDirectionRef.current = direction;
-
       return () => clearTimeout(turnTimeout);
     }
   }, [direction, isPlaying, humanState]);
 
-  // Walking animation - restarts when direction changes to fix visual sync
+  // Walking animation
   useEffect(() => {
     if (!isPlaying || viewState !== 'side') return;
     if (!leftLegRef.current || !rightLegRef.current || !leftArmRef.current || !rightArmRef.current) return;
 
-    // Reset all transforms before starting new animation
-    gsap.set(leftLegRef.current, { rotation: 0, transformOrigin: '-3px 5px' }); // Front leg hip at (-3, 5)
-    gsap.set(rightLegRef.current, { rotation: 0, transformOrigin: '3px 5px' });  // Back leg hip at (3, 5)
-    gsap.set(leftArmRef.current, { rotation: 0, transformOrigin: '-4px -12px' }); // Back arm shoulder at (-4, -12)
-    gsap.set(rightArmRef.current, { rotation: 0, transformOrigin: '6px -12px' }); // Front arm shoulder at (6, -12)
+    gsap.set(leftLegRef.current, { rotation: 0, transformOrigin: '-3px 5px' });
+    gsap.set(rightLegRef.current, { rotation: 0, transformOrigin: '3px 5px' });
+    gsap.set(leftArmRef.current, { rotation: 0, transformOrigin: '-4px -10px' });
+    gsap.set(rightArmRef.current, { rotation: 0, transformOrigin: '6px -10px' });
 
     const tl = gsap.timeline({ repeat: -1 });
     walkingTlRef.current = tl;
 
-    // Walking animation - opposite arm and leg swing together (natural walking motion)
-    // When front leg swings forward, back arm swings forward (and vice versa)
     const swingAngle = 18;
     const duration = 0.18;
 
-    // Phase 1: Front leg forward, back leg back, front arm back, back arm forward
     tl.to(leftLegRef.current, { rotation: swingAngle, duration, ease: 'sine.inOut' }, 0)
       .to(rightLegRef.current, { rotation: -swingAngle, duration, ease: 'sine.inOut' }, 0)
       .to(leftArmRef.current, { rotation: swingAngle, duration, ease: 'sine.inOut' }, 0)
       .to(rightArmRef.current, { rotation: -swingAngle, duration, ease: 'sine.inOut' }, 0)
-    // Phase 2: Reverse
       .to(leftLegRef.current, { rotation: -swingAngle, duration, ease: 'sine.inOut' })
       .to(rightLegRef.current, { rotation: swingAngle, duration, ease: 'sine.inOut' }, '<')
       .to(leftArmRef.current, { rotation: -swingAngle, duration, ease: 'sine.inOut' }, '<')
@@ -130,304 +191,155 @@ export function Human({
     };
   }, [isPlaying, viewState, currentDirection]);
 
-  // Shooting view - aiming gun upward
+  // Shooting view
   if (viewState === 'shooting') {
     return (
       <g transform={`translate(${x}, ${y}) scale(${scaleX}, 1)`} style={{ opacity, transition: 'opacity 0.5s ease' }}>
         {/* Shadow */}
-        <ellipse cx="0" cy="28" rx="15" ry="4" fill="rgba(0,0,0,0.2)" />
+        <polygon points="-14,28 14,28 18,32 -18,32" fill="rgba(0,0,0,0.2)" />
 
-        {/* Legs - standing still */}
-        <path d="M 3 5 L 3 22 L 6 26" stroke="#1a1a2e" strokeWidth="6" strokeLinecap="round" fill="none" />
-        <ellipse cx="8" cy="26" rx="6" ry="3" fill="#2d2d2d" />
-        <path d="M -3 5 L -3 22 L -6 26" stroke="#1a1a2e" strokeWidth="6" strokeLinecap="round" fill="none" />
-        <ellipse cx="-8" cy="26" rx="6" ry="3" fill="#2d2d2d" />
+        {/* Back leg */}
+        <path d="M 3 8 L 5 20 L 8 26" stroke="#111" strokeWidth="5" strokeLinecap="square" fill="none" />
+        <polygon points="2,25 14,25 14,29 2,29" fill="#111" />
 
-        {/* Body - Side profile suit */}
-        <path
-          d="M -6 -15 L -6 8 L 8 8 L 8 -15 Q 1 -18 -6 -15"
-          fill="#1a1a2e"
-          stroke="#0d0d1a"
-          strokeWidth="1"
-        />
+        {/* Front leg */}
+        <path d="M -3 8 L -5 20 L -8 26" stroke="#111" strokeWidth="5" strokeLinecap="square" fill="none" />
+        <polygon points="-14,25 -2,25 -2,29 -14,29" fill="#111" />
 
-        {/* White shirt collar */}
-        <path d="M -2 -15 L 0 -12 L 4 -15" stroke="#fff" strokeWidth="2" fill="none" />
+        <SuitBody />
 
-        {/* Tie */}
-        <path d="M 1 -12 L 1 2" stroke="#8B0000" strokeWidth="3" />
+        {/* Back arm — supporting */}
+        <path d="M -4 -10 L 2 -24" stroke="#111" strokeWidth="4" strokeLinecap="square" fill="none" />
 
-        {/* Back arm - supporting gun */}
-        <path
-          d="M -4 -12 L 2 -25"
-          stroke="#1a1a2e"
-          strokeWidth="5"
-          strokeLinecap="round"
-          fill="none"
-        />
+        {/* Head — drawn before gun arm so arm/gun paint on top */}
+        <PicassoSideHead transform="translate(4, -26) rotate(-10)" />
 
-        {/* Front arm - holding gun up */}
-        <path
-          d="M 6 -12 L 6 -30"
-          stroke="#1a1a2e"
-          strokeWidth="5"
-          strokeLinecap="round"
-          fill="none"
-        />
+        {/* Front arm — gun arm extended up */}
+        <path d="M 6 -10 L 6 -28" stroke="#111" strokeWidth="4" strokeLinecap="square" fill="none" />
 
-        {/* Gun */}
-        <g transform="translate(4, -32)">
-          {/* Gun body */}
-          <rect x="-3" y="-8" width="6" height="12" fill="#2d2d2d" rx="1" />
-          {/* Gun barrel - pointing up */}
-          <rect x="-2" y="-18" width="4" height="10" fill="#1a1a1a" />
-          {/* Gun grip */}
-          <rect x="-2" y="4" width="4" height="6" fill="#4a3728" rx="1" />
-        </g>
+        {/* Gun — grip body, positioned above hand */}
+        <polygon points="2,-28 12,-28 12,-20 2,-20" fill="#888" stroke="#111" strokeWidth="2" />
+        {/* Gun barrel — pointing up */}
+        <polygon points="4,-28 10,-28 10,-44 4,-44" fill="#AAA" stroke="#111" strokeWidth="2" />
+        {/* Lighter facet plane on barrel */}
+        <polygon points="4,-28 6,-28 6,-44 4,-44" fill="#CCC" />
+        {/* Trigger guard — small angular hook */}
+        <path d="M 2,-24 L -2,-24 L -2,-20 L 2,-20" stroke="#111" strokeWidth="1.5" fill="none" />
 
-        {/* Hand on gun */}
-        <circle cx="4" cy="-30" r="3" fill="#E8BEAC" />
-        <circle cx="2" cy="-26" r="2.5" fill="#E8BEAC" />
-
-        {/* Head - Side profile, looking up */}
-        <g transform="translate(0, -25) rotate(-15)">
-          <path
-            d="M -4 0
-               C -6 -8, 2 -14, 8 -10
-               L 10 -6
-               L 14 -4
-               L 14 2
-               L 10 6
-               L 4 8
-               L -2 6
-               L -4 0"
-            fill="#E8BEAC"
-            stroke="#D4A08C"
-            strokeWidth="1"
-          />
-
-          {/* Hair - receding */}
-          <path
-            d="M 0 -12
-               C 4 -14, 8 -12, 9 -10
-               L 8 -8
-               C 6 -10, 2 -10, 0 -8
-               L -2 -6
-               C -2 -10, -1 -12, 0 -12"
-            fill="#3d2314"
-          />
-
-          {/* Side hair */}
-          <path d="M -3 -4 C -5 -6, -4 -2, -3 0" fill="#3d2314" />
-
-          {/* Ear */}
-          <ellipse cx="-3" cy="-2" rx="2" ry="3" fill="#E8BEAC" stroke="#D4A08C" strokeWidth="0.5" />
-
-          {/* Eye - looking up */}
-          <ellipse cx="6" cy="-4" rx="2" ry="1.5" fill="#fff" />
-          <circle cx="6" cy="-5" r="1" fill="#4a3728" />
-
-          {/* Eyebrow - furrowed */}
-          <path d="M 4 -7 Q 6 -9 9 -8" stroke="#3d2314" strokeWidth="1" fill="none" />
-
-          {/* Nose */}
-          <path d="M 10 -6 L 14 -2 L 12 0" stroke="#D4A08C" strokeWidth="1" fill="none" />
-
-          {/* Mouth - determined */}
-          <path d="M 10 3 L 12 2" stroke="#c77" strokeWidth="1.5" strokeLinecap="round" />
-        </g>
+        {/* Hand gripping gun */}
+        <polygon points="2,-28 6,-30 10,-28 8,-24 2,-24" fill="#E8C49A" stroke="#111" strokeWidth="1" />
       </g>
     );
   }
 
-  // Vomiting reaction - bent over with green splatter
+  // Vomiting reaction
   if (viewState === 'vomiting') {
     return (
       <g transform={`translate(${x}, ${y})`} style={{ opacity, transition: 'opacity 0.5s ease' }}>
-        {/* Shadow */}
-        <ellipse cx="0" cy="28" rx="15" ry="4" fill="rgba(0,0,0,0.2)" />
+        <polygon points="-14,28 14,28 18,32 -18,32" fill="rgba(0,0,0,0.2)" />
 
-        {/* Legs - slightly bent */}
-        <path d="M -5 5 L -8 22 L -10 26" stroke="#1a1a2e" strokeWidth="6" strokeLinecap="round" fill="none" />
-        <path d="M 5 5 L 2 22 L 0 26" stroke="#1a1a2e" strokeWidth="6" strokeLinecap="round" fill="none" />
-        <ellipse cx="-12" cy="26" rx="6" ry="3" fill="#2d2d2d" />
-        <ellipse cx="-2" cy="26" rx="6" ry="3" fill="#2d2d2d" />
+        {/* Legs — bent */}
+        <path d="M -5 8 L -8 22 L -10 26" stroke="#111" strokeWidth="5" strokeLinecap="square" fill="none" />
+        <path d="M 5 8 L 2 22 L 0 26" stroke="#111" strokeWidth="5" strokeLinecap="square" fill="none" />
+        <polygon points="-16,25 -4,25 -4,29 -16,29" fill="#111" />
+        <polygon points="-6,25 6,25 6,29 -6,29" fill="#111" />
 
-        {/* Body - bent forward */}
+        {/* Body — bent forward via rotation */}
         <g transform="rotate(30)">
-          <path
-            d="M -10 -15 L -10 8 L 10 8 L 10 -15 Q 0 -20 -10 -15"
-            fill="#1a1a2e"
-            stroke="#0d0d1a"
-            strokeWidth="1"
-          />
-          <path d="M -4 -15 L 0 -10 L 4 -15" stroke="#fff" strokeWidth="2" fill="none" />
-          <path d="M 0 -10 L 0 5" stroke="#8B0000" strokeWidth="4" />
+          <polygon points="-6,-14 8,-14 10,8 -8,8" fill="#1A3A7A" stroke="#111" strokeWidth="2" />
+          <polygon points="-2,-14 2,-10 6,-14" fill="#F5ECD7" stroke="#111" strokeWidth="1.5" />
+          <polygon points="1,-10 3,6 -1,6" fill="#8B1A1A" stroke="#111" strokeWidth="1" />
         </g>
 
         {/* Arms hanging */}
-        <path d="M -5 -5 L 5 10" stroke="#1a1a2e" strokeWidth="5" strokeLinecap="round" fill="none" />
-        <path d="M 10 -5 L 20 10" stroke="#1a1a2e" strokeWidth="5" strokeLinecap="round" fill="none" />
+        <path d="M -5 -5 L 5 10" stroke="#111" strokeWidth="4" strokeLinecap="square" fill="none" />
+        <path d="M 10 -5 L 20 10" stroke="#111" strokeWidth="4" strokeLinecap="square" fill="none" />
 
-        {/* Head - looking down */}
-        <g transform="translate(15, -15) rotate(45)">
-          <ellipse cx="0" cy="0" rx="10" ry="12" fill="#E8BEAC" />
-          <path d="M -8 -8 Q -8 -14 0 -14 Q 8 -14 8 -8 L 6 -6 Q 0 -10 -6 -6 Z" fill="#3d2314" />
-          {/* Sick face */}
-          <ellipse cx="-4" cy="-2" rx="2" ry="1.5" fill="#fff" />
-          <ellipse cx="4" cy="-2" rx="2" ry="1.5" fill="#fff" />
-          <circle cx="-4" cy="-2" r="1" fill="#4a3728" />
-          <circle cx="4" cy="-2" r="1" fill="#4a3728" />
-          {/* Green tint on face */}
-          <ellipse cx="0" cy="2" rx="6" ry="4" fill="#90EE90" opacity="0.3" />
-          {/* Open mouth */}
-          <ellipse cx="0" cy="6" rx="4" ry="3" fill="#8B4513" />
-        </g>
+        {/* Head — side profile, looking down */}
+        <PicassoSideHead transform="translate(16, -15) rotate(40)" />
 
-        {/* Vomit splatter */}
-        <g transform="translate(25, 0)">
-          <ellipse cx="0" cy="5" rx="8" ry="5" fill="#90EE90" opacity="0.8" />
-          <ellipse cx="5" cy="8" rx="5" ry="3" fill="#7CFC00" opacity="0.7" />
-          <ellipse cx="-3" cy="10" rx="4" ry="2" fill="#ADFF2F" opacity="0.6" />
-          {/* Drips */}
-          <path d="M 0 -5 Q 2 0 0 5" stroke="#90EE90" strokeWidth="3" fill="none" />
-          <path d="M -5 -3 Q -3 2 -5 7" stroke="#7CFC00" strokeWidth="2" fill="none" />
+        {/* Vomit — angular green burst polygons */}
+        <g transform="translate(28, 2)">
+          <polygon points="-6,0 0,-8 6,0 4,8 -4,8" fill="#5A9A20" opacity="0.85" stroke="#111" strokeWidth="1" />
+          <polygon points="4,2 12,-4 14,4 8,10" fill="#7ABA30" opacity="0.8" stroke="#111" strokeWidth="1" />
+          <polygon points="-4,6 2,10 0,16 -6,14" fill="#5A9A20" opacity="0.7" />
         </g>
       </g>
     );
   }
 
-  // Crying reaction - face in hands
+  // Crying reaction
   if (viewState === 'crying') {
     return (
       <g transform={`translate(${x}, ${y})`} style={{ opacity, transition: 'opacity 0.5s ease' }}>
-        {/* Shadow */}
-        <ellipse cx="0" cy="28" rx="15" ry="4" fill="rgba(0,0,0,0.2)" />
+        <polygon points="-14,28 14,28 18,32 -18,32" fill="rgba(0,0,0,0.2)" />
 
-        {/* Legs - standing */}
-        <path d="M -5 5 L -5 22 L -8 26" stroke="#1a1a2e" strokeWidth="6" strokeLinecap="round" fill="none" />
-        <path d="M 5 5 L 5 22 L 8 26" stroke="#1a1a2e" strokeWidth="6" strokeLinecap="round" fill="none" />
-        <ellipse cx="-10" cy="26" rx="6" ry="3" fill="#2d2d2d" />
-        <ellipse cx="10" cy="26" rx="6" ry="3" fill="#2d2d2d" />
+        {/* Legs */}
+        <path d="M -5 8 L -5 22 L -8 26" stroke="#111" strokeWidth="5" strokeLinecap="square" fill="none" />
+        <path d="M 5 8 L 5 22 L 8 26" stroke="#111" strokeWidth="5" strokeLinecap="square" fill="none" />
+        <polygon points="-14,25 -2,25 -2,29 -14,29" fill="#111" />
+        <polygon points="2,25 14,25 14,29 2,29" fill="#111" />
 
-        {/* Body - hunched slightly */}
-        <path
-          d="M -10 -15 L -10 8 L 10 8 L 10 -15 Q 0 -20 -10 -15"
-          fill="#1a1a2e"
-          stroke="#0d0d1a"
-          strokeWidth="1"
-        />
-        <path d="M -4 -15 L 0 -10 L 4 -15" stroke="#fff" strokeWidth="2" fill="none" />
-        <path d="M 0 -10 L 0 5" stroke="#8B0000" strokeWidth="4" />
+        {/* Body */}
+        <polygon points="-8,-14 8,-14 10,8 -10,8" fill="#1A3A7A" stroke="#111" strokeWidth="2" />
+        <polygon points="-2,-14 2,-10 6,-14" fill="#F5ECD7" stroke="#111" strokeWidth="1.5" />
+        <polygon points="0,-10 2,6 -2,6" fill="#8B1A1A" stroke="#111" strokeWidth="1" />
 
-        {/* Arms up to face */}
-        <path d="M -10 -12 L -8 -25" stroke="#1a1a2e" strokeWidth="5" strokeLinecap="round" fill="none" />
-        <path d="M 10 -12 L 8 -25" stroke="#1a1a2e" strokeWidth="5" strokeLinecap="round" fill="none" />
-        <circle cx="-8" cy="-27" r="3" fill="#E8BEAC" />
-        <circle cx="8" cy="-27" r="3" fill="#E8BEAC" />
+        {/* Arms raised to face */}
+        <path d="M -8 -10 L -8 -24" stroke="#111" strokeWidth="4" strokeLinecap="square" fill="none" />
+        <path d="M 8 -10 L 8 -24" stroke="#111" strokeWidth="4" strokeLinecap="square" fill="none" />
+        <polygon points="-10,-24 -8,-27 -6,-24 -8,-21" fill="#E8C49A" stroke="#111" strokeWidth="1" />
+        <polygon points="6,-24 8,-27 10,-24 8,-21" fill="#E8C49A" stroke="#111" strokeWidth="1" />
 
-        {/* Head - crying */}
-        <g transform="translate(0, -40)">
-          <ellipse cx="0" cy="0" rx="10" ry="12" fill="#E8BEAC" />
-          <path d="M -8 -8 Q -8 -14 0 -14 Q 8 -14 8 -8 L 6 -6 Q 0 -10 -6 -6 Z" fill="#3d2314" />
-          {/* Closed eyes with tears */}
-          <path d="M -6 -2 L -2 -2" stroke="#4a3728" strokeWidth="1.5" />
-          <path d="M 2 -2 L 6 -2" stroke="#4a3728" strokeWidth="1.5" />
-          {/* Tear streaks */}
-          <path d="M -4 0 Q -5 5 -4 12" stroke="#87CEEB" strokeWidth="2" fill="none" opacity="0.8" />
-          <path d="M 4 0 Q 5 5 4 12" stroke="#87CEEB" strokeWidth="2" fill="none" opacity="0.8" />
-          {/* Tear drops */}
-          <circle cx="-4" cy="14" r="2" fill="#87CEEB" />
-          <circle cx="4" cy="14" r="2" fill="#87CEEB" />
-          {/* Sad eyebrows */}
-          <path d="M -6 -5 Q -4 -3 -2 -4" stroke="#3d2314" strokeWidth="1" fill="none" />
-          <path d="M 2 -4 Q 4 -3 6 -5" stroke="#3d2314" strokeWidth="1" fill="none" />
-          {/* Frowning mouth */}
-          <path d="M -3 6 Q 0 4 3 6" stroke="#c77" strokeWidth="1.5" fill="none" />
-          {/* Red nose from crying */}
-          <circle cx="0" cy="2" r="2" fill="#ff9999" />
-        </g>
+        {/* Head — Picasso front head (facing camera, distressed) */}
+        <PicassoFrontHead transform="translate(0, -40)" />
+
+        {/* Tears — angular diamond drops */}
+        <polygon points="-5,-26 -4,-22 -3,-26 -4,-29" fill="#4A7AB0" opacity="0.9" />
+        <polygon points="3,-26 4,-22 5,-26 4,-29" fill="#4A7AB0" opacity="0.9" />
+        <polygon points="-6,-18 -5,-14 -4,-18 -5,-21" fill="#4A7AB0" opacity="0.7" />
+        <polygon points="4,-18 5,-14 6,-18 5,-21" fill="#4A7AB0" opacity="0.7" />
       </g>
     );
   }
 
-  // Running reaction - sprinting pose
+  // Running reaction
   if (viewState === 'running') {
     return (
       <g transform={`translate(${x}, ${y}) scale(${scaleX}, 1)`} style={{ opacity, transition: 'opacity 0.5s ease' }}>
-        {/* Shadow - stretched from running */}
-        <ellipse cx="5" cy="28" rx="20" ry="4" fill="rgba(0,0,0,0.2)" />
+        {/* Shadow — elongated from speed */}
+        <polygon points="-10,28 24,28 28,32 -14,32" fill="rgba(0,0,0,0.2)" />
 
-        {/* Back leg - extended back */}
-        <path d="M 5 5 L 20 15 L 30 20" stroke="#1a1a2e" strokeWidth="6" strokeLinecap="round" fill="none" />
-        <ellipse cx="32" cy="20" rx="6" ry="3" fill="#2d2d2d" transform="rotate(-20, 32, 20)" />
+        {/* Back leg — extended back */}
+        <path d="M 5 5 L 20 14 L 30 20" stroke="#111" strokeWidth="5" strokeLinecap="square" fill="none" />
+        <polygon points="26,18 38,18 38,22 26,22" fill="#111" transform="rotate(-20, 32, 20)" />
 
-        {/* Body - leaning forward */}
+        {/* Body — leaning forward */}
         <g transform="rotate(-20)">
-          <path
-            d="M -6 -15 L -6 8 L 8 8 L 8 -15 Q 1 -18 -6 -15"
-            fill="#1a1a2e"
-            stroke="#0d0d1a"
-            strokeWidth="1"
-          />
-          <path d="M -2 -15 L 0 -12 L 4 -15" stroke="#fff" strokeWidth="2" fill="none" />
-          <path d="M 1 -12 L 1 2" stroke="#8B0000" strokeWidth="3" />
+          <polygon points="-6,-14 8,-14 10,8 -8,8" fill="#1A3A7A" stroke="#111" strokeWidth="2" />
+          <polygon points="-2,-14 2,-10 6,-14" fill="#F5ECD7" stroke="#111" strokeWidth="1.5" />
+          <polygon points="1,-10 3,6 -1,6" fill="#8B1A1A" stroke="#111" strokeWidth="1" />
         </g>
 
-        {/* Front leg - lifted high */}
-        <path d="M -5 0 L -15 -5 L -20 5" stroke="#1a1a2e" strokeWidth="6" strokeLinecap="round" fill="none" />
-        <ellipse cx="-22" cy="7" rx="6" ry="3" fill="#2d2d2d" transform="rotate(15, -22, 7)" />
+        {/* Front leg — lifted high */}
+        <path d="M -5 0 L -15 -5 L -20 5" stroke="#111" strokeWidth="5" strokeLinecap="square" fill="none" />
+        <polygon points="-26,3 -14,3 -14,7 -26,7" fill="#111" transform="rotate(15, -20, 5)" />
 
-        {/* Back arm - extended back */}
-        <path d="M -2 -20 L 15 -10" stroke="#1a1a2e" strokeWidth="5" strokeLinecap="round" fill="none" />
-        <circle cx="17" cy="-9" r="3" fill="#E8BEAC" />
+        {/* Back arm — extended back */}
+        <path d="M -2 -18 L 14 -10" stroke="#111" strokeWidth="4" strokeLinecap="square" fill="none" />
+        <polygon points="12,-12 18,-8 16,-4 10,-8" fill="#E8C49A" stroke="#111" strokeWidth="1" />
 
-        {/* Front arm - pumping forward */}
-        <path d="M 5 -20 L -10 -30" stroke="#1a1a2e" strokeWidth="5" strokeLinecap="round" fill="none" />
-        <circle cx="-12" cy="-31" r="3" fill="#E8BEAC" />
+        {/* Front arm — pumping forward */}
+        <path d="M 4 -18 L -10 -28" stroke="#111" strokeWidth="4" strokeLinecap="square" fill="none" />
+        <polygon points="-14,-30 -8,-26 -6,-30 -12,-34" fill="#E8C49A" stroke="#111" strokeWidth="1" />
 
-        {/* Head - looking forward in panic */}
-        <g transform="translate(5, -35) rotate(-15)">
-          <path
-            d="M -4 0
-               C -6 -8, 2 -14, 8 -10
-               L 10 -6
-               L 14 -4
-               L 14 2
-               L 10 6
-               L 4 8
-               L -2 6
-               L -4 0"
-            fill="#E8BEAC"
-            stroke="#D4A08C"
-            strokeWidth="1"
-          />
-          <path
-            d="M 0 -12
-               C 4 -14, 8 -12, 9 -10
-               L 8 -8
-               C 6 -10, 2 -10, 0 -8
-               L -2 -6
-               C -2 -10, -1 -12, 0 -12"
-            fill="#3d2314"
-          />
-          <path d="M -3 -4 C -5 -6, -4 -2, -3 0" fill="#3d2314" />
-          {/* Wide panicked eye */}
-          <ellipse cx="6" cy="-4" rx="3" ry="2.5" fill="#fff" />
-          <circle cx="7" cy="-4" r="1.5" fill="#4a3728" />
-          {/* Raised eyebrow */}
-          <path d="M 3 -8 Q 6 -10 10 -8" stroke="#3d2314" strokeWidth="1" fill="none" />
-          {/* Open mouth screaming */}
-          <ellipse cx="12" cy="2" rx="3" ry="4" fill="#8B4513" />
-          {/* Sweat drops */}
-          <path d="M -2 -8 Q -4 -12 -2 -14" stroke="#87CEEB" strokeWidth="1" fill="none" />
-          <circle cx="-2" cy="-14" r="1.5" fill="#87CEEB" />
-        </g>
+        {/* Head — side Picasso, tilted back in panic */}
+        <PicassoSideHead transform="translate(6, -34) rotate(-12)" />
 
-        {/* Speed lines */}
-        <path d="M 35 -10 L 50 -10" stroke="#888" strokeWidth="1" opacity="0.5" />
-        <path d="M 35 0 L 55 0" stroke="#888" strokeWidth="1" opacity="0.5" />
-        <path d="M 35 10 L 50 10" stroke="#888" strokeWidth="1" opacity="0.5" />
+        {/* Speed lines — bold angular slashes */}
+        <line x1="36" y1="-8" x2="50" y2="-10" stroke="#111" strokeWidth="2.5" strokeLinecap="round" />
+        <line x1="38" y1="2" x2="56" y2="2" stroke="#111" strokeWidth="2.5" strokeLinecap="round" />
+        <line x1="36" y1="12" x2="50" y2="10" stroke="#111" strokeWidth="2.5" strokeLinecap="round" />
       </g>
     );
   }
@@ -436,70 +348,31 @@ export function Human({
   if (viewState === 'front') {
     return (
       <g transform={`translate(${x}, ${y})`} style={{ opacity, transition: 'opacity 0.5s ease' }}>
-        {/* Shadow */}
-        <ellipse cx="0" cy="28" rx="15" ry="4" fill="rgba(0,0,0,0.2)" />
+        <polygon points="-14,28 14,28 18,32 -18,32" fill="rgba(0,0,0,0.2)" />
 
-        {/* Legs - standing */}
-        <path d="M -5 5 L -5 22 L -8 26" stroke="#1a1a2e" strokeWidth="6" strokeLinecap="round" fill="none" />
-        <path d="M 5 5 L 5 22 L 8 26" stroke="#1a1a2e" strokeWidth="6" strokeLinecap="round" fill="none" />
+        {/* Legs */}
+        <path d="M -5 8 L -5 22 L -8 26" stroke="#111" strokeWidth="5" strokeLinecap="square" fill="none" />
+        <path d="M 5 8 L 5 22 L 8 26" stroke="#111" strokeWidth="5" strokeLinecap="square" fill="none" />
+        <polygon points="-14,25 -2,25 -2,29 -14,29" fill="#111" />
+        <polygon points="2,25 14,25 14,29 2,29" fill="#111" />
 
-        {/* Shoes */}
-        <ellipse cx="-10" cy="26" rx="6" ry="3" fill="#2d2d2d" />
-        <ellipse cx="10" cy="26" rx="6" ry="3" fill="#2d2d2d" />
-
-        {/* Body - front view suit */}
-        <path
-          d="M -10 -15 L -10 8 L 10 8 L 10 -15 Q 0 -20 -10 -15"
-          fill="#1a1a2e"
-          stroke="#0d0d1a"
-          strokeWidth="1"
-        />
-
-        {/* White shirt collar */}
-        <path d="M -4 -15 L 0 -10 L 4 -15" stroke="#fff" strokeWidth="2" fill="none" />
-
+        {/* Body — front view angular suit */}
+        <polygon points="-10,-14 10,-14 10,8 -10,8" fill="#1A3A7A" stroke="#111" strokeWidth="2" />
+        {/* Lapel seam */}
+        <line x1="0" y1="-14" x2="0" y2="8" stroke="#0E2456" strokeWidth="1.5" />
+        {/* Collar */}
+        <polygon points="-4,-14 0,-10 4,-14" fill="#F5ECD7" stroke="#111" strokeWidth="1.5" />
         {/* Tie */}
-        <path d="M 0 -10 L 0 5" stroke="#8B0000" strokeWidth="4" />
+        <polygon points="-1,-10 1,-10 3,6 -3,6" fill="#8B1A1A" stroke="#111" strokeWidth="1" />
 
-        {/* Arms - at sides */}
-        <path d="M -10 -12 L -14 2" stroke="#1a1a2e" strokeWidth="5" strokeLinecap="round" fill="none" />
-        <path d="M 10 -12 L 14 2" stroke="#1a1a2e" strokeWidth="5" strokeLinecap="round" fill="none" />
+        {/* Arms — at sides */}
+        <path d="M -10 -10 L -14 4" stroke="#111" strokeWidth="4" strokeLinecap="square" fill="none" />
+        <path d="M 10 -10 L 14 4" stroke="#111" strokeWidth="4" strokeLinecap="square" fill="none" />
+        <polygon points="-16,2 -12,4 -10,8 -14,6" fill="#E8C49A" stroke="#111" strokeWidth="1" />
+        <polygon points="10,4 14,2 16,6 12,8" fill="#E8C49A" stroke="#111" strokeWidth="1" />
 
-        {/* Hands */}
-        <circle cx="-14" cy="4" r="3" fill="#E8BEAC" />
-        <circle cx="14" cy="4" r="3" fill="#E8BEAC" />
-
-        {/* Head - front view */}
-        <g transform="translate(0, -28)">
-          {/* Face shape */}
-          <ellipse cx="0" cy="0" rx="10" ry="12" fill="#E8BEAC" />
-
-          {/* Hair - receding */}
-          <path
-            d="M -8 -8 Q -8 -14 0 -14 Q 8 -14 8 -8 L 6 -6 Q 0 -10 -6 -6 Z"
-            fill="#3d2314"
-          />
-
-          {/* Eyes */}
-          <ellipse cx="-4" cy="-2" rx="2" ry="1.5" fill="#fff" />
-          <ellipse cx="4" cy="-2" rx="2" ry="1.5" fill="#fff" />
-          <circle cx="-4" cy="-2" r="1" fill="#4a3728" />
-          <circle cx="4" cy="-2" r="1" fill="#4a3728" />
-
-          {/* Eyebrows */}
-          <path d="M -6 -5 L -2 -5" stroke="#3d2314" strokeWidth="1" />
-          <path d="M 2 -5 L 6 -5" stroke="#3d2314" strokeWidth="1" />
-
-          {/* Nose */}
-          <path d="M 0 -1 L 0 3" stroke="#D4A08C" strokeWidth="1" />
-
-          {/* Mouth - slight smirk */}
-          <path d="M -3 6 Q 0 8 3 6" stroke="#c77" strokeWidth="1.5" fill="none" />
-
-          {/* Ears */}
-          <ellipse cx="-9" cy="0" rx="2" ry="3" fill="#E8BEAC" />
-          <ellipse cx="9" cy="0" rx="2" ry="3" fill="#E8BEAC" />
-        </g>
+        {/* Head — Picasso front head */}
+        <PicassoFrontHead transform="translate(0, -30)" />
       </g>
     );
   }
@@ -507,121 +380,37 @@ export function Human({
   // Side view (normal walking)
   return (
     <g transform={`translate(${x}, ${y}) scale(${scaleX}, 1)`} style={{ opacity, transition: 'opacity 0.5s ease' }}>
-      {/* Shadow */}
-      <ellipse cx="0" cy="28" rx="15" ry="4" fill="rgba(0,0,0,0.2)" />
+      <polygon points="-14,28 14,28 18,32 -18,32" fill="rgba(0,0,0,0.2)" />
 
-      {/* Back leg (behind body) */}
+      {/* Back leg (behind body, GSAP ref preserved) */}
       <g ref={rightLegRef}>
-        <path
-          d="M 3 5 L 3 20 L 6 26"
-          stroke="#1a1a2e"
-          strokeWidth="6"
-          strokeLinecap="round"
-          fill="none"
-        />
-        <ellipse cx="8" cy="26" rx="6" ry="3" fill="#2d2d2d" />
+        <path d="M 3 8 L 5 20 L 8 26" stroke="#111" strokeWidth="5" strokeLinecap="square" fill="none" />
+        <polygon points="2,25 14,25 14,29 2,29" fill="#111" />
       </g>
 
-      {/* Body - Side profile suit */}
-      <path
-        d="M -6 -15 L -6 8 L 8 8 L 8 -15 Q 1 -18 -6 -15"
-        fill="#1a1a2e"
-        stroke="#0d0d1a"
-        strokeWidth="1"
-      />
+      {/* Suit body */}
+      <SuitBody />
 
-      {/* White shirt collar */}
-      <path d="M -2 -15 L 0 -12 L 4 -15" stroke="#fff" strokeWidth="2" fill="none" />
-
-      {/* Tie */}
-      <path d="M 1 -12 L 1 2" stroke="#8B0000" strokeWidth="3" />
-
-      {/* Back arm */}
+      {/* Back arm (GSAP ref preserved) */}
       <g ref={leftArmRef}>
-        <path
-          d="M -4 -12 L -8 0"
-          stroke="#1a1a2e"
-          strokeWidth="5"
-          strokeLinecap="round"
-          fill="none"
-        />
-        <circle cx="-8" cy="2" r="3" fill="#E8BEAC" />
+        <path d="M -4 -10 L -10 4" stroke="#111" strokeWidth="4" strokeLinecap="square" fill="none" />
+        <polygon points="-12,2 -10,5 -8,2 -10,-1" fill="#E8C49A" stroke="#111" strokeWidth="1" />
       </g>
 
-      {/* Front leg */}
+      {/* Front leg (GSAP ref preserved) */}
       <g ref={leftLegRef}>
-        <path
-          d="M -3 5 L -3 20 L -6 26"
-          stroke="#1a1a2e"
-          strokeWidth="6"
-          strokeLinecap="round"
-          fill="none"
-        />
-        <ellipse cx="-8" cy="26" rx="6" ry="3" fill="#2d2d2d" />
+        <path d="M -3 8 L -5 20 L -8 26" stroke="#111" strokeWidth="5" strokeLinecap="square" fill="none" />
+        <polygon points="-14,25 -2,25 -2,29 -14,29" fill="#111" />
       </g>
 
-      {/* Front arm */}
+      {/* Front arm (GSAP ref preserved) */}
       <g ref={rightArmRef}>
-        <path
-          d="M 6 -12 L 10 0"
-          stroke="#1a1a2e"
-          strokeWidth="5"
-          strokeLinecap="round"
-          fill="none"
-        />
-        <circle cx="10" cy="2" r="3" fill="#E8BEAC" />
+        <path d="M 6 -10 L 12 4" stroke="#111" strokeWidth="4" strokeLinecap="square" fill="none" />
+        <polygon points="10,2 12,5 14,2 12,-1" fill="#E8C49A" stroke="#111" strokeWidth="1" />
       </g>
 
-      {/* Head - Side profile */}
-      <g transform="translate(0, -25)">
-        <path
-          d="M -4 0
-             C -6 -8, 2 -14, 8 -10
-             L 10 -6
-             L 14 -4
-             L 14 2
-             L 10 6
-             L 4 8
-             L -2 6
-             L -4 0"
-          fill="#E8BEAC"
-          stroke="#D4A08C"
-          strokeWidth="1"
-        />
-
-        {/* Hair - receding */}
-        <path
-          d="M 0 -12
-             C 4 -14, 8 -12, 9 -10
-             L 8 -8
-             C 6 -10, 2 -10, 0 -8
-             L -2 -6
-             C -2 -10, -1 -12, 0 -12"
-          fill="#3d2314"
-        />
-
-        {/* Side hair */}
-        <path d="M -3 -4 C -5 -6, -4 -2, -3 0" fill="#3d2314" />
-
-        {/* Ear */}
-        <ellipse cx="-3" cy="-2" rx="2" ry="3" fill="#E8BEAC" stroke="#D4A08C" strokeWidth="0.5" />
-
-        {/* Eye */}
-        <ellipse cx="6" cy="-4" rx="2" ry="1.5" fill="#fff" />
-        <circle cx="7" cy="-4" r="1" fill="#4a3728" />
-
-        {/* Eyebrow */}
-        <path d="M 4 -7 Q 6 -8 9 -7" stroke="#3d2314" strokeWidth="1" fill="none" />
-
-        {/* Nose */}
-        <path d="M 10 -6 L 14 -2 L 12 0" stroke="#D4A08C" strokeWidth="1" fill="none" />
-
-        {/* Mouth */}
-        <path d="M 10 3 L 13 3" stroke="#c77" strokeWidth="1.5" strokeLinecap="round" />
-
-        {/* Chin */}
-        <path d="M 10 6 Q 8 8 4 8" stroke="#D4A08C" strokeWidth="0.5" fill="none" />
-      </g>
+      {/* Head — Picasso side head */}
+      <PicassoSideHead transform="translate(4, -28)" />
     </g>
   );
 }

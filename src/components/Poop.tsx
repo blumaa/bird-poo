@@ -110,26 +110,34 @@ export function Poop({ poop, level, getHumanX, onHit, onMiss, onRemove }: PoopPr
 
   return (
     <>
-      {/* Falling poop - fixed X, only Y animated by GSAP */}
+      {/* Falling poop — Cubist angular faceted turd */}
       {!showSplat && (
         <g ref={poopRef} transform={`translate(${poop.x}, 0)`}>
-          <ellipse cx="0" cy="0" rx="8" ry="6" fill="#8B4513" />
-          <ellipse cx="0" cy="-5" rx="6" ry="5" fill="#8B4513" />
-          <ellipse cx="0" cy="-9" rx="4" ry="4" fill="#8B4513" />
-          <ellipse cx="0" cy="-12" rx="2" ry="2" fill="#8B4513" />
+          {/* Bottom tier — wide angular trapezoid */}
+          <polygon points="-8,5 -6,-2 6,-2 8,5" fill="#5D3010" stroke="#111" strokeWidth="2" />
+          {/* Middle tier */}
+          <polygon points="-5,-2 -4,-8 4,-8 5,-2" fill="#7A4020" stroke="#111" strokeWidth="2" />
+          {/* Upper tier */}
+          <polygon points="-3,-8 -2,-13 3,-13 3,-8" fill="#8B5030" stroke="#111" strokeWidth="2" />
+          {/* Top peak */}
+          <polygon points="-1,-13 0,-17 2,-13" fill="#9B6040" stroke="#111" strokeWidth="1.5" />
+          {/* Cubist light-plane facet — off-center highlight shard */}
+          <polygon points="-2,0 2,-6 4,0" fill="#9B6040" opacity="0.7" />
         </g>
       )}
 
-      {/* Splat effect */}
+      {/* Splat effect — angular geometric burst */}
       {showSplat && (
         <g ref={splatRef} transform={`translate(${splatPos.x}, ${splatPos.y})`}>
-          <ellipse cx="0" cy="0" rx="15" ry="5" fill="#8B4513" />
-          <circle cx="-12" cy="-3" r="4" fill="#8B4513" />
-          <circle cx="10" cy="-5" r="3" fill="#8B4513" />
-          <circle cx="-8" cy="3" r="3" fill="#8B4513" />
-          <circle cx="14" cy="2" r="2" fill="#8B4513" />
-          <circle cx="-15" cy="-6" r="2" fill="#8B4513" />
-          <circle cx="8" cy="-8" r="2" fill="#8B4513" />
+          {/* Central diamond */}
+          <polygon points="-12,0 0,-4 12,0 0,6" fill="#5D3010" stroke="#111" strokeWidth="1.5" />
+          {/* Radiating angular shards */}
+          <polygon points="0,0 14,-6 16,2" fill="#7A4020" stroke="#111" strokeWidth="1" />
+          <polygon points="0,0 -14,-6 -16,2" fill="#5D3010" stroke="#111" strokeWidth="1" />
+          <polygon points="0,0 8,-12 14,-8" fill="#8B5030" stroke="#111" strokeWidth="1" />
+          <polygon points="0,0 -8,-12 -14,-8" fill="#7A4020" stroke="#111" strokeWidth="1" />
+          <polygon points="0,0 10,8 4,14" fill="#5D3010" stroke="#111" strokeWidth="1" />
+          <polygon points="0,0 -10,8 -4,14" fill="#7A4020" stroke="#111" strokeWidth="1" />
         </g>
       )}
     </>
