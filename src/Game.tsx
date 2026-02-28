@@ -14,6 +14,7 @@ import { GameOverOverlay } from './components/GameOverOverlay';
 import { SkyBackground } from './components/SkyBackground';
 import { GroundBackground } from './components/GroundBackground';
 import { LevelUpOverlay } from './components/LevelUpOverlay';
+import { TouchZoneHints } from './components/TouchZoneHints';
 import { VIEWBOX, PLAYER_Y } from './utils/constants';
 import type { PoopData, BulletData } from './types/game';
 
@@ -250,6 +251,9 @@ export function Game() {
             isRespawning={state.isHumanRespawning}
             opacity={humanOpacity}
           />
+
+          {/* Touch zone hints — mobile only, auto-fades */}
+          <TouchZoneHints />
 
           {/* Level up animation */}
           {showLevelUp && (
