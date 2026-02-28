@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-40 -20 80 45">
+  <!-- Wings -->
+  <path d="M -5 0 C -15 -8, -30 -12, -38 -5 C -30 -2, -15 2, -5 0" fill="#6B6B6B" stroke="#4A4A4A" stroke-width="1"/>
+  <path d="M 5 0 C 15 -8, 30 -12, 38 -5 C 30 -2, 15 2, 5 0" fill="#6B6B6B" stroke="#4A4A4A" stroke-width="1"/>
+  <!-- Body -->
+  <ellipse cx="0" cy="0" rx="18" ry="11" fill="#4A4A4A"/>
+  <!-- Head -->
+  <circle cx="16" cy="-4" r="9" fill="#4A4A4A"/>
+  <!-- Beak -->
+  <polygon points="25,-4 36,-2 25,1" fill="#FFA500"/>
+  <!-- Eye -->
+  <circle cx="18" cy="-6" r="3" fill="#fff"/>
+  <circle cx="19" cy="-6" r="1.5" fill="#000"/>
+  <!-- Tail -->
+  <path d="M -16 2 Q -28 0 -24 -6" fill="#5A5A5A" stroke="#4A4A4A" stroke-width="1"/>
+  <path d="M -16 0 Q -26 2 -22 8" fill="#5A5A5A" stroke="#4A4A4A" stroke-width="1"/>
+</svg>
