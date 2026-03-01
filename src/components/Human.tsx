@@ -100,8 +100,12 @@ export function Human({
   opacity = 1,
 }: HumanProps) {
   const [viewState, setViewState] = useState<ViewState>('side');
+  const viewStateRef = useRef<ViewState>('side');
   const [currentDirection, setCurrentDirection] = useState(direction);
   const prevDirectionRef = useRef(direction);
+
+  // Keep ref in sync so effects can read current viewState without listing it as dep
+  viewStateRef.current = viewState;
   const scaleX = currentDirection === 'left' ? -1 : 1;
 
   const leftLegRef = useRef<SVGGElement>(null);
@@ -117,29 +121,33 @@ export function Human({
       if (walkingTlRef.current) {
         walkingTlRef.current.pause();
       }
-    } else if (viewState === 'vomiting' || viewState === 'crying' || viewState === 'running') {
-      setViewState('side');
-      if (walkingTlRef.current && isPlaying) {
-        walkingTlRef.current.play();
+    } else {
+      const vs = viewStateRef.current;
+      if (vs === 'vomiting' || vs === 'crying' || vs === 'running') {
+        setViewState('side');
+        if (walkingTlRef.current && isPlaying) {
+          walkingTlRef.current.play();
+        }
       }
     }
-  }, [humanReaction, isPlaying, viewState]);
+  }, [humanReaction, isPlaying]);
 
   // Handle shooting state
   useEffect(() => {
     if (humanReaction !== 'none') return;
-    if (humanState === 'shooting' && viewState !== 'front') {
+    const vs = viewStateRef.current;
+    if (humanState === 'shooting' && vs !== 'front') {
       setViewState('shooting');
       if (walkingTlRef.current) {
         walkingTlRef.current.pause();
       }
-    } else if (humanState === 'walking' && viewState === 'shooting') {
+    } else if (humanState === 'walking' && vs === 'shooting') {
       setViewState('side');
       if (walkingTlRef.current && isPlaying) {
         walkingTlRef.current.play();
       }
     }
-  }, [humanState, isPlaying, viewState, humanReaction]);
+  }, [humanState, isPlaying, humanReaction]);
 
   // Handle direction change with turn animation
   useEffect(() => {

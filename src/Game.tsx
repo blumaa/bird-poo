@@ -198,12 +198,12 @@ export function Game() {
   }, [resetGame]);
 
   return (
-    <div style={{ position: 'relative', width: '100%', maxWidth: '400px' }}>
+    <div style={{ position: 'relative', width: '100%', height: '100%' }}>
     <svg
       viewBox={`0 0 ${VIEWBOX.width} ${VIEWBOX.height}`}
       style={{
         width: '100%',
-        height: 'auto',
+        height: '100%',
         touchAction: 'none',
         userSelect: 'none',
         display: 'block',

@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { VIEWBOX } from '../utils/constants';
 
 // Paul Klee palette
@@ -37,7 +38,7 @@ const FLOWERS = [
   { x: 380, color: K.dustyRose,  size: 5 },
 ];
 
-export function GroundBackground() {
+export const GroundBackground = memo(function GroundBackground() {
   return (
     <g>
       {/* ── GROUND — Klee patchwork mosaic of greens ── */}
@@ -180,4 +181,4 @@ export function GroundBackground() {
       </g>
     </g>
   );
-}
+});

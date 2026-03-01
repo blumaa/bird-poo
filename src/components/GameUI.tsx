@@ -1,4 +1,20 @@
+import { memo } from 'react';
 import { MAX_AMMO } from '../utils/constants';
+
+// Module-level constants — never recreated on render
+const AMMO_INDICES = Array.from({ length: MAX_AMMO }, (_, i) => i);
+const LIVES_INDICES = [0, 1, 2] as const;
+
+// HeartIcon path — size is always 9, compute once
+const HEART_SIZE = 9;
+const HEART_PATH = [
+  `M 0 ${HEART_SIZE * 0.3}`,
+  `C ${-HEART_SIZE * 0.1} ${HEART_SIZE * 0.05} ${-HEART_SIZE * 0.6} ${-HEART_SIZE * 0.35} ${-HEART_SIZE * 0.5} ${-HEART_SIZE * 0.55}`,
+  `C ${-HEART_SIZE * 0.4} ${-HEART_SIZE * 0.75} ${-HEART_SIZE * 0.1} ${-HEART_SIZE * 0.7} 0 ${-HEART_SIZE * 0.5}`,
+  `C ${HEART_SIZE * 0.1} ${-HEART_SIZE * 0.7} ${HEART_SIZE * 0.4} ${-HEART_SIZE * 0.75} ${HEART_SIZE * 0.5} ${-HEART_SIZE * 0.55}`,
+  `C ${HEART_SIZE * 0.6} ${-HEART_SIZE * 0.35} ${HEART_SIZE * 0.1} ${HEART_SIZE * 0.05} 0 ${HEART_SIZE * 0.3}`,
+  'Z',
+].join(' ');
 
 interface GameUIProps {
   score: number;
@@ -41,8 +57,8 @@ const COLOR = {
 // Sub-components
 // --------------------------------------------------------------------
 
-/** SVG <defs> block — filters for neon glow and scanline pattern */
-function ArcadeDefs() {
+/** SVG <defs> block — filters for neon glow and scanline pattern. Memoized: never changes. */
+const ArcadeDefs = memo(function ArcadeDefs() {
   return (
     <defs>
       {/* Green neon glow — score / level / ammo labels */}
@@ -95,7 +111,7 @@ function ArcadeDefs() {
       </pattern>
     </defs>
   );
-}
+});
 
 /** Rounded panel backdrop with a subtle border */
 function Panel({
@@ -171,37 +187,23 @@ function PoopIcon({
   );
 }
 
-/** SVG-drawn heart shape */
+/** SVG-drawn heart shape — uses module-level HEART_PATH (size always 9) */
 function HeartIcon({
   cx,
   cy,
   active,
-  size = 9,
 }: {
   cx: number;
   cy: number;
   active: boolean;
-  size?: number;
 }) {
-  const s = size;
-  // Heart via two circles + a triangle, drawn relative to center
-  // Using a cubic bezier path that scales with `s`
-  const d = [
-    `M 0 ${s * 0.3}`,
-    `C ${-s * 0.1} ${s * 0.05} ${-s * 0.6} ${-s * 0.35} ${-s * 0.5} ${-s * 0.55}`,
-    `C ${-s * 0.4} ${-s * 0.75} ${-s * 0.1} ${-s * 0.7} 0 ${-s * 0.5}`,
-    `C ${s * 0.1} ${-s * 0.7} ${s * 0.4} ${-s * 0.75} ${s * 0.5} ${-s * 0.55}`,
-    `C ${s * 0.6} ${-s * 0.35} ${s * 0.1} ${s * 0.05} 0 ${s * 0.3}`,
-    'Z',
-  ].join(' ');
-
   const fill = active ? COLOR.heartActive : COLOR.heartDim;
   const stroke = active ? COLOR.heartActive : COLOR.heartDimStroke;
   const glowFilter = active ? `url(#${FILTER_IDS.neonRed})` : undefined;
 
   return (
     <g transform={`translate(${cx}, ${cy})`} filter={glowFilter}>
-      <path d={d} fill={fill} stroke={stroke} strokeWidth="0.8" />
+      <path d={HEART_PATH} fill={fill} stroke={stroke} strokeWidth="0.8" />
     </g>
   );
 }
@@ -294,7 +296,7 @@ function AmmoBlock({ ammo }: { ammo: number }) {
       </text>
 
       {/* Poop icons */}
-      {Array.from({ length: MAX_AMMO }).map((_, i) => (
+      {AMMO_INDICES.map((i) => (
         <PoopIcon
           key={i}
           cx={ammoStartX + i * spacing}
@@ -333,7 +335,7 @@ function LivesBlock({ birdLives }: { birdLives: number }) {
       </text>
 
       {/* Heart icons */}
-      {[0, 1, 2].map((i) => (
+      {LIVES_INDICES.map((i) => (
         <HeartIcon
           key={i}
           cx={livesStartX + 10 + i * spacing}

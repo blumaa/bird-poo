@@ -1,6 +1,9 @@
+import { memo } from 'react';
 import { VIEWBOX } from '../utils/constants';
 
-export function SkyBackground() {
+const SUN_ANGLES = [0, 45, 90, 135, 180, 225, 270, 315];
+
+export const SkyBackground = memo(function SkyBackground() {
   return (
     <g>
       <defs>
@@ -22,7 +25,7 @@ export function SkyBackground() {
       {/* Sun — flat yellow, thick black outline, bold rays */}
       <g transform="translate(350, 50)">
         {/* Bold rays: draw black (wider) underneath, then yellow on top */}
-        {[0, 45, 90, 135, 180, 225, 270, 315].map((angle) => (
+        {SUN_ANGLES.map((angle) => (
           <g key={angle}>
             <line
               x1="0" y1="0"
@@ -85,4 +88,4 @@ export function SkyBackground() {
       </g>
     </g>
   );
-}
+});
