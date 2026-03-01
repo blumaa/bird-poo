@@ -166,7 +166,6 @@ function PoopIcon({
   active: boolean;
 }) {
   const mainFill = active ? COLOR.ammoFull : COLOR.ammoEmpty;
-  const highlightFill = active ? COLOR.ammoFullHighlight : COLOR.ammoEmpty;
   const strokeColor = active ? COLOR.ammoFull : COLOR.ammoEmptyStroke;
   const glowFilter = active ? `url(#${FILTER_IDS.neonBrown})` : undefined;
 
