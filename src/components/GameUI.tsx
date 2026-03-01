@@ -174,15 +174,11 @@ function PoopIcon({
   return (
     <g transform={`translate(${cx}, ${cy})`} filter={glowFilter}>
       {/* Base blob */}
-      <ellipse cx="0" cy="4" rx="5.5" ry="3.5" fill={mainFill} stroke={strokeColor} strokeWidth="0.6" />
+      <ellipse cx="0" cy="4" rx="3.5" ry="1.5" fill={mainFill} stroke={strokeColor} strokeWidth="0.6" />
       {/* Middle blob */}
-      <ellipse cx="0" cy="0" rx="4" ry="3.5" fill={mainFill} stroke={strokeColor} strokeWidth="0.6" />
+      <ellipse cx="0" cy="0" rx="2" ry="1.5" fill={mainFill} stroke={strokeColor} strokeWidth="0.6" />
       {/* Top blob / head */}
-      <ellipse cx="0" cy="-4" rx="2.8" ry="2.8" fill={mainFill} stroke={strokeColor} strokeWidth="0.6" />
-      {/* Highlight on active poop */}
-      {active && (
-        <ellipse cx="-1" cy="-5" rx="1.2" ry="0.9" fill={highlightFill} opacity="0.7" />
-      )}
+      <ellipse cx="0" cy="-3" rx="1" ry="1" fill={mainFill} stroke={strokeColor} strokeWidth="0.6" />
     </g>
   );
 }
@@ -211,7 +207,7 @@ function HeartIcon({
 // --------------------------------------------------------------------
 // Left panel: Score + Level + Ammo
 // --------------------------------------------------------------------
-const LEFT_PANEL = { x: 5, y: 5, width: 170, height: 86 };
+const LEFT_PANEL = { x: 5, y: 5, width: 155, height: 65 };
 
 function ScoreLevelBlock({ score, level }: { score: number; level: number }) {
   return (
@@ -314,15 +310,15 @@ function AmmoBlock({ ammo }: { ammo: number }) {
 const RIGHT_PANEL = { x: 265, y: 5, width: 130, height: 40 };
 
 function LivesBlock({ birdLives }: { birdLives: number }) {
-  const livesY = RIGHT_PANEL.y + 22;
-  const livesStartX = RIGHT_PANEL.x + 8;
+  const livesY = RIGHT_PANEL.y + 28;
+  const livesStartX = RIGHT_PANEL.x + 10;
   const spacing = 20;
 
   return (
     <g>
       {/* LIVES label */}
       <text
-        x={RIGHT_PANEL.x + 7}
+        x={RIGHT_PANEL.x + 15}
         y={RIGHT_PANEL.y + 12}
         fill={COLOR.lvlLabel}
         fontSize="8"
