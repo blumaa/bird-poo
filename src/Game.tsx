@@ -1,5 +1,6 @@
 import { useCallback, useRef, useState, useEffect } from 'react';
 import { useGameState } from './hooks/useGameState';
+import { useHighScores } from './hooks/useHighScores';
 import { useBirdControls } from './hooks/useBirdControls';
 import { useHumanAI } from './hooks/useHumanAI';
 import { useAmmoRegen } from './hooks/useAmmoRegen';
@@ -31,6 +32,7 @@ export function Game() {
     regenAmmo,
     resetGame,
     birdHit,
+    finalizeGameOver,
     startShooting,
     stopShooting,
     spawnBullet,
@@ -38,6 +40,8 @@ export function Game() {
     startRespawn,
     finishRespawn,
   } = useGameState();
+
+  const { scores, submitScore, isEligible } = useHighScores();
 
   const [birdDirection, setBirdDirection] = useState<'left' | 'right'>('right');
   const [showLevelUp, setShowLevelUp] = useState(false);
@@ -58,13 +62,21 @@ export function Game() {
 
   // Track bird getting hit
   useEffect(() => {
-    if (state.birdLives < prevBirdLivesRef.current && state.status === 'playing') {
+    if (state.birdLives < prevBirdLivesRef.current && (state.status === 'playing' || state.status === 'dying')) {
       setBirdHurt(true);
       const timeout = setTimeout(() => setBirdHurt(false), 800);
       return () => clearTimeout(timeout);
     }
     prevBirdLivesRef.current = state.birdLives;
   }, [state.birdLives, state.status]);
+
+  // Delay game over overlay to let hurt animation finish
+  useEffect(() => {
+    if (state.status === 'dying') {
+      const timeout = setTimeout(finalizeGameOver, 1200);
+      return () => clearTimeout(timeout);
+    }
+  }, [state.status, finalizeGameOver]);
 
   const handleLevelUpComplete = useCallback(() => {
     setShowLevelUp(false);
@@ -186,14 +198,15 @@ export function Game() {
   }, [resetGame]);
 
   return (
+    <div style={{ position: 'relative', width: '100%', maxWidth: '400px' }}>
     <svg
       viewBox={`0 0 ${VIEWBOX.width} ${VIEWBOX.height}`}
       style={{
         width: '100%',
-        maxWidth: '400px',
         height: 'auto',
         touchAction: 'none',
         userSelect: 'none',
+        display: 'block',
       }}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
@@ -207,7 +220,7 @@ export function Game() {
 
       {state.status === 'idle' && <StartScreen onStart={handleStart} />}
 
-      {(state.status === 'playing' || state.status === 'paused') && (
+      {(state.status === 'playing' || state.status === 'paused' || state.status === 'dying') && (
         <>
           <GameUI
             score={state.score}
@@ -263,21 +276,25 @@ export function Game() {
       )}
 
       {state.status === 'gameOver' && (
-        <>
-          <Human
-            x={state.humanX}
-            y={PLAYER_Y}
-            direction={state.humanDirection}
-            isPlaying={false}
-            humanState="walking"
-          />
-          <GameOverOverlay
-            score={state.score}
-            level={state.level}
-            onRestart={handleRestart}
-          />
-        </>
+        <Human
+          x={state.humanX}
+          y={PLAYER_Y}
+          direction={state.humanDirection}
+          isPlaying={false}
+          humanState="walking"
+        />
       )}
     </svg>
+    {state.status === 'gameOver' && (
+      <GameOverOverlay
+        score={state.score}
+        level={state.level}
+        highScores={scores}
+        isEligible={isEligible(state.score)}
+        onSubmitScore={submitScore}
+        onRestart={handleRestart}
+      />
+    )}
+    </div>
   );
 }

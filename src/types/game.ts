@@ -1,4 +1,4 @@
-export type GameStatus = 'idle' | 'playing' | 'paused' | 'gameOver';
+export type GameStatus = 'idle' | 'playing' | 'paused' | 'dying' | 'gameOver';
 
 export interface PoopData {
   id: string;
@@ -55,6 +55,7 @@ export type GameAction =
   | { type: 'FINISH_RESPAWN' }
   | { type: 'PAUSE_GAME' }
   | { type: 'RESUME_GAME' }
+  | { type: 'FINALIZE_GAME_OVER' }
   | { type: 'RESET_GAME' };
 
 export interface LevelConfig {

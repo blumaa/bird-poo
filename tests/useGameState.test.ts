@@ -225,10 +225,18 @@ describe('gameReducer', () => {
       expect(state.status).toBe('playing');
     });
 
-    it('sets status to gameOver when lives reach 0', () => {
+    it('sets status to dying when lives reach 0', () => {
       const lastLifeState: GameState = { ...INITIAL_STATE, status: 'playing', birdLives: 1 };
       const state = gameReducer(lastLifeState, { type: 'BIRD_HIT' });
       expect(state.birdLives).toBe(0);
+      expect(state.status).toBe('dying');
+    });
+  });
+
+  describe('FINALIZE_GAME_OVER', () => {
+    it('transitions dying → gameOver', () => {
+      const dyingState: GameState = { ...INITIAL_STATE, status: 'dying' };
+      const state = gameReducer(dyingState, { type: 'FINALIZE_GAME_OVER' });
       expect(state.status).toBe('gameOver');
     });
   });

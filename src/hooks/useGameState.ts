@@ -64,7 +64,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       const newLevel = calculateLevel(newTotalHits);
       const leveledUp = newLevel > state.level;
       const newLevelHits = leveledUp ? 1 : state.levelHits + 1;
-      const newScore = state.score + (newLevel * 10);
+      const newScore = state.score + (state.level * 10);
       return {
         ...state,
         score: newScore,
@@ -87,7 +87,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         return {
           ...state,
           birdLives: 0,
-          status: 'gameOver',
+          status: 'dying',
         };
       }
       return {
@@ -95,6 +95,9 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         birdLives: newLives,
       };
     }
+
+    case 'FINALIZE_GAME_OVER':
+      return { ...state, status: 'gameOver' };
 
     case 'START_SHOOTING':
       return { ...state, humanState: 'shooting' };
@@ -182,6 +185,10 @@ export function useGameState() {
     dispatch({ type: 'BIRD_HIT' });
   }, []);
 
+  const finalizeGameOver = useCallback(() => {
+    dispatch({ type: 'FINALIZE_GAME_OVER' });
+  }, []);
+
   const startShooting = useCallback(() => {
     dispatch({ type: 'START_SHOOTING' });
   }, []);
@@ -236,6 +243,7 @@ export function useGameState() {
     hitHuman,
     missHuman,
     birdHit,
+    finalizeGameOver,
     startShooting,
     stopShooting,
     spawnBullet,

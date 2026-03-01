@@ -87,6 +87,7 @@ export function useBirdControls({ birdX, ammo, isPlaying, onMove, onPoop }: UseB
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
       if (['ArrowLeft', 'ArrowRight', 'a', 'd', 'A', 'D'].includes(e.key)) {
         e.preventDefault();
         keysPressed.current.add(e.key);
