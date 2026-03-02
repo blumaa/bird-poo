@@ -19,15 +19,8 @@ export const AMMO_REGEN_INTERVAL = 2000;
 export const INITIAL_BIRD_LIVES = 3;
 export const HUMAN_HIT_Y = PLAYER_Y - 45; // Top of human hit zone (above head)
 
-export const LEVEL_CONFIGS: Record<number, LevelConfig> = {
-  1: { humanSpeed: 2, poopFallDuration: 2.0, hitsRequired: 5,  minShootInterval: 4000, maxShootInterval: 7000 },
-  2: { humanSpeed: 3, poopFallDuration: 1.8, hitsRequired: 10, minShootInterval: 3500, maxShootInterval: 6000 },
-  3: { humanSpeed: 4, poopFallDuration: 1.5, hitsRequired: 15, minShootInterval: 3000, maxShootInterval: 5000 },
-  4: { humanSpeed: 5, poopFallDuration: 1.2, hitsRequired: 20, minShootInterval: 2500, maxShootInterval: 4000 },
-  5: { humanSpeed: 6, poopFallDuration: 1.0, hitsRequired: 25, minShootInterval: 2000, maxShootInterval: 3000 },
-};
-
-export const MAX_LEVEL = 5;
+// 100 points per level, 10 points per hit = 10 hits per level
+const HITS_PER_LEVEL = 10;
 
 export const INITIAL_STATE: GameState = {
   status: 'idle',
@@ -48,17 +41,21 @@ export const INITIAL_STATE: GameState = {
   birdLives: INITIAL_BIRD_LIVES,
 };
 
+// Fully formula-based: humanSpeed has no cap per spec
 export function getLevelConfig(level: number): LevelConfig {
-  const clampedLevel = Math.min(Math.max(level, 1), MAX_LEVEL);
-  return LEVEL_CONFIGS[clampedLevel];
+  const l = Math.max(level, 1);
+  return {
+    humanSpeed:       l + 1,
+    poopFallDuration: Math.max(2.0 - (l - 1) * 0.15, 0.4),
+    hitsRequired:     HITS_PER_LEVEL,
+    minShootInterval: Math.max(4000 - (l - 1) * 400, 300),
+    maxShootInterval: Math.max(7000 - (l - 1) * 700, 600),
+  };
 }
 
+// New level every 10 hits (= 100 points at 10pts/hit)
 export function calculateLevel(hits: number): number {
-  if (hits >= 25) return 5;
-  if (hits >= 20) return 4;
-  if (hits >= 15) return 3;
-  if (hits >= 10) return 2;
-  return 1;
+  return Math.floor(hits / HITS_PER_LEVEL) + 1;
 }
 
 export function checkCollision(humanX: number, poopX: number): boolean {

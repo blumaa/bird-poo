@@ -76,6 +76,8 @@ export function LevelUpOverlay({ level, onComplete }: LevelUpOverlayProps) {
   useEffect(() => {
     if (!containerRef.current) return;
 
+    gsap.set(containerRef.current, { transformOrigin: 'center center' });
+
     const tl = gsap.timeline({
       onComplete: () => {
         onCompleteRef.current();

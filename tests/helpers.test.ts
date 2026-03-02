@@ -16,47 +16,51 @@ describe('calculateLevel', () => {
     expect(calculateLevel(9)).toBe(1);
   });
 
-  it('returns level 2 for 10 hits', () => {
+  it('returns level 2 for 10 hits (100 points)', () => {
     expect(calculateLevel(10)).toBe(2);
   });
 
-  it('returns level 3 for 15 hits', () => {
-    expect(calculateLevel(15)).toBe(3);
+  it('returns level 3 for 20 hits (200 points)', () => {
+    expect(calculateLevel(20)).toBe(3);
   });
 
-  it('returns level 4 for 20 hits', () => {
-    expect(calculateLevel(20)).toBe(4);
-  });
-
-  it('returns level 5 for 25+ hits', () => {
-    expect(calculateLevel(25)).toBe(5);
-    expect(calculateLevel(100)).toBe(5);
+  it('scales indefinitely with no cap', () => {
+    expect(calculateLevel(50)).toBe(6);
+    expect(calculateLevel(100)).toBe(11);
+    expect(calculateLevel(1000)).toBe(101);
   });
 });
 
 describe('getLevelConfig', () => {
-  it('returns config for level 1', () => {
+  it('returns base config for level 1', () => {
     const config = getLevelConfig(1);
     expect(config.humanSpeed).toBe(2);
     expect(config.poopFallDuration).toBe(2.0);
-    expect(config.hitsRequired).toBe(5);
+    expect(config.hitsRequired).toBe(10);
+    expect(config.minShootInterval).toBe(4000);
+    expect(config.maxShootInterval).toBe(7000);
   });
 
-  it('returns config for level 5', () => {
-    const config = getLevelConfig(5);
-    expect(config.humanSpeed).toBe(6);
-    expect(config.poopFallDuration).toBe(1.0);
-    expect(config.hitsRequired).toBe(25);
+  it('increments humanSpeed by 1 per level with no cap', () => {
+    expect(getLevelConfig(1).humanSpeed).toBe(2);
+    expect(getLevelConfig(5).humanSpeed).toBe(6);
+    expect(getLevelConfig(20).humanSpeed).toBe(21);
+    expect(getLevelConfig(100).humanSpeed).toBe(101);
   });
 
-  it('clamps to level 1 if below', () => {
-    const config = getLevelConfig(0);
-    expect(config.humanSpeed).toBe(2);
+  it('reduces shoot intervals each level', () => {
+    expect(getLevelConfig(2).minShootInterval).toBe(3600);
+    expect(getLevelConfig(2).maxShootInterval).toBe(6300);
   });
 
-  it('clamps to level 5 if above', () => {
-    const config = getLevelConfig(10);
-    expect(config.humanSpeed).toBe(6);
+  it('floors shoot intervals at minimum values', () => {
+    const config = getLevelConfig(1000);
+    expect(config.minShootInterval).toBe(300);
+    expect(config.maxShootInterval).toBe(600);
+  });
+
+  it('clamps to level 1 if given 0 or below', () => {
+    expect(getLevelConfig(0).humanSpeed).toBe(2);
   });
 });
 

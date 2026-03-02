@@ -64,7 +64,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       const newLevel = calculateLevel(newTotalHits);
       const leveledUp = newLevel > state.level;
       const newLevelHits = leveledUp ? 1 : state.levelHits + 1;
-      const newScore = state.score + (state.level * 10);
+      const newScore = state.score + 10;
       return {
         ...state,
         score: newScore,
