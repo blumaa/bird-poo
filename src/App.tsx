@@ -1,3 +1,4 @@
+import { Analytics } from '@vercel/analytics/react'
 import { Game } from './Game'
 
 function App() {
@@ -10,6 +11,7 @@ function App() {
       }}
     >
       <Game />
+      <Analytics />
     </div>
   )
 }
