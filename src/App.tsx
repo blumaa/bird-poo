@@ -1,4 +1,5 @@
 import { Analytics } from '@vercel/analytics/react'
+import { SpeedInsights } from '@vercel/speed-insights/react'
 import { Game } from './Game'
 
 function App() {
@@ -12,6 +13,7 @@ function App() {
     >
       <Game />
       <Analytics />
+      <SpeedInsights />
     </div>
   )
 }
