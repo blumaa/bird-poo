@@ -16,6 +16,8 @@ import { SkyBackground } from './components/SkyBackground';
 import { GroundBackground } from './components/GroundBackground';
 import { LevelUpOverlay } from './components/LevelUpOverlay';
 import { TouchZoneHints } from './components/TouchZoneHints';
+import { HudButtons } from './components/HudButtons';
+import { HighScoresModal } from './components/HighScoresModal';
 import { VIEWBOX, PLAYER_Y } from './utils/constants';
 import type { PoopData, BulletData } from './types/game';
 
@@ -39,6 +41,8 @@ export function Game() {
     removeBullet,
     startRespawn,
     finishRespawn,
+    pauseGame,
+    resumeGame,
   } = useGameState();
 
   const { scores, submitScore, isEligible } = useHighScores();
@@ -48,6 +52,7 @@ export function Game() {
   const [displayLevel, setDisplayLevel] = useState(1);
   const [humanOpacity, setHumanOpacity] = useState(1);
   const [birdHurt, setBirdHurt] = useState(false);
+  const [showScores, setShowScores] = useState(false);
   const prevLevelRef = useRef(state.level);
   const prevBirdLivesRef = useRef(state.birdLives);
 
@@ -272,6 +277,14 @@ export function Game() {
           {showLevelUp && (
             <LevelUpOverlay level={displayLevel} onComplete={handleLevelUpComplete} />
           )}
+
+          {/* HUD buttons — inside SVG so they scale with the viewBox */}
+          <HudButtons
+            isPaused={state.status === 'paused'}
+            onPause={pauseGame}
+            onResume={resumeGame}
+            onShowScores={() => setShowScores(true)}
+          />
         </>
       )}
 
@@ -294,6 +307,10 @@ export function Game() {
         onSubmitScore={submitScore}
         onRestart={handleRestart}
       />
+    )}
+
+    {showScores && (
+      <HighScoresModal scores={scores} onClose={() => setShowScores(false)} />
     )}
     </div>
   );
