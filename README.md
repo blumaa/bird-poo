@@ -1,74 +1,61 @@
-# React + TypeScript + Vite
+# Bird Poo
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A browser-based arcade game where you play as a bird trying to poop on unsuspecting humans below.
 
-Currently, two official plugins are available:
+## How to Play
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **Move**: Touch/drag left or right on screen to fly the bird
+- **Poop**: Tap to drop a poop bomb on the human
+- **Dodge**: Avoid the bullets the human fires back at you
 
-## React Compiler
+**Lives**: You start with 3 lives. Getting hit by a bullet costs a life. Lose all 3 and it's game over.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+**Ammo**: You have limited ammo that slowly regenerates.
 
-## Expanding the ESLint configuration
+## How It Was Made
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+Built as a progressive web app (PWA) using React and Vite.
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+### Tech Stack
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+- **React 18** — component architecture and state management via `useReducer`
+- **TypeScript** — fully typed throughout
+- **GSAP** — all animations: walking legs/arms, bird wing flap, poop trajectory, level-up overlay, human shake on hit
+- **SVG** — the entire game is rendered in a single `<svg>` viewBox (400×600), which scales to fill any screen size
+- **Vite + vite-plugin-pwa** — fast dev server, production build, and PWA manifest/service worker generation
+- **Supabase** — cloud Postgres database backing the top-10 leaderboard (row-level security, public read/insert)
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+### Architecture
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+The game uses a single reducer (`useGameState`) as the source of truth for all game state: bird position, human position, score, level, ammo, lives, poop projectiles, and bullets. Logic hooks (`useHumanAI`, `useHumanShooting`, `useAmmoRegen`, `useBirdControls`) drive behavior by calling action dispatchers.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+All visuals are SVG components. Characters are drawn in a Picasso cubist style — angular polygons, split geometric planes, simultaneous profile+frontal views. The human has six animated states: side-walk, front-turn, shooting, vomiting, crying, and running.
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
-# bird-poo
+### PWA
+
+The game installs as a full-screen portrait app on iOS and Android via "Add to Home Screen". The service worker precaches all assets for offline play.
+
+## Contributing
+
+Contributions are welcome. To get started:
+
+1. Fork the repository
+2. Install dependencies: `npm install`
+3. Start the dev server: `npm run dev`
+4. Run tests: `npm run test`
+5. Make your changes and ensure tests pass: `npm run test:run`
+6. Open a pull request with a clear description of what you changed and why
+
+Please keep PRs focused — one feature or fix per PR. Follow the existing code style (TypeScript strict, React hooks, GSAP for all animations).
+
+## License
+
+MIT License
+
+Copyright (c) 2026 blumaa
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.

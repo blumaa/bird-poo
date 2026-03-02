@@ -108,6 +108,7 @@ export function Human({
   viewStateRef.current = viewState;
   const scaleX = currentDirection === 'left' ? -1 : 1;
 
+  const shakeRef = useRef<SVGGElement>(null);
   const leftLegRef = useRef<SVGGElement>(null);
   const rightLegRef = useRef<SVGGElement>(null);
   const leftArmRef = useRef<SVGGElement>(null);
@@ -131,6 +132,20 @@ export function Human({
       }
     }
   }, [humanReaction, isPlaying]);
+
+  // Shake when hit by poo
+  useEffect(() => {
+    if (humanReaction === 'none' || !shakeRef.current) return;
+    const tl = gsap.timeline();
+    tl.to(shakeRef.current, { x: -10, duration: 0.05, ease: 'power2.out' })
+      .to(shakeRef.current, { x:  10, duration: 0.05 })
+      .to(shakeRef.current, { x:  -8, duration: 0.05 })
+      .to(shakeRef.current, { x:   8, duration: 0.05 })
+      .to(shakeRef.current, { x:  -5, duration: 0.05 })
+      .to(shakeRef.current, { x:   5, duration: 0.05 })
+      .to(shakeRef.current, { x:   0, duration: 0.05 });
+    return () => { tl.kill(); };
+  }, [humanReaction]);
 
   // Handle shooting state
   useEffect(() => {
@@ -199,226 +214,143 @@ export function Human({
     };
   }, [isPlaying, viewState, currentDirection]);
 
-  // Shooting view
-  if (viewState === 'shooting') {
-    return (
-      <g transform={`translate(${x}, ${y}) scale(${scaleX}, 1)`} style={{ opacity, transition: 'opacity 0.5s ease' }}>
-        {/* Shadow */}
-        <polygon points="-14,28 14,28 18,32 -18,32" fill="rgba(0,0,0,0.2)" />
-
-        {/* Back leg */}
-        <path d="M 3 8 L 5 20 L 8 26" stroke="#111" strokeWidth="5" strokeLinecap="square" fill="none" />
-        <polygon points="2,25 14,25 14,29 2,29" fill="#111" />
-
-        {/* Front leg */}
-        <path d="M -3 8 L -5 20 L -8 26" stroke="#111" strokeWidth="5" strokeLinecap="square" fill="none" />
-        <polygon points="-14,25 -2,25 -2,29 -14,29" fill="#111" />
-
-        <SuitBody />
-
-        {/* Back arm — supporting */}
-        <path d="M -4 -10 L 2 -24" stroke="#111" strokeWidth="4" strokeLinecap="square" fill="none" />
-
-        {/* Head — drawn before gun arm so arm/gun paint on top */}
-        <PicassoSideHead transform="translate(4, -26) rotate(-10)" />
-
-        {/* Front arm — gun arm extended up */}
-        <path d="M 6 -10 L 6 -28" stroke="#111" strokeWidth="4" strokeLinecap="square" fill="none" />
-
-        {/* Gun — grip body, positioned above hand */}
-        <polygon points="2,-28 12,-28 12,-20 2,-20" fill="#888" stroke="#111" strokeWidth="2" />
-        {/* Gun barrel — pointing up */}
-        <polygon points="4,-28 10,-28 10,-44 4,-44" fill="#AAA" stroke="#111" strokeWidth="2" />
-        {/* Lighter facet plane on barrel */}
-        <polygon points="4,-28 6,-28 6,-44 4,-44" fill="#CCC" />
-        {/* Trigger guard — small angular hook */}
-        <path d="M 2,-24 L -2,-24 L -2,-20 L 2,-20" stroke="#111" strokeWidth="1.5" fill="none" />
-
-        {/* Hand gripping gun */}
-        <polygon points="2,-28 6,-30 10,-28 8,-24 2,-24" fill="#E8C49A" stroke="#111" strokeWidth="1" />
-      </g>
-    );
-  }
-
-  // Vomiting reaction
-  if (viewState === 'vomiting') {
-    return (
-      <g transform={`translate(${x}, ${y})`} style={{ opacity, transition: 'opacity 0.5s ease' }}>
-        <polygon points="-14,28 14,28 18,32 -18,32" fill="rgba(0,0,0,0.2)" />
-
-        {/* Legs — bent */}
-        <path d="M -5 8 L -8 22 L -10 26" stroke="#111" strokeWidth="5" strokeLinecap="square" fill="none" />
-        <path d="M 5 8 L 2 22 L 0 26" stroke="#111" strokeWidth="5" strokeLinecap="square" fill="none" />
-        <polygon points="-16,25 -4,25 -4,29 -16,29" fill="#111" />
-        <polygon points="-6,25 6,25 6,29 -6,29" fill="#111" />
-
-        {/* Body — bent forward via rotation */}
-        <g transform="rotate(30)">
-          <polygon points="-6,-14 8,-14 10,8 -8,8" fill="#1A3A7A" stroke="#111" strokeWidth="2" />
-          <polygon points="-2,-14 2,-10 6,-14" fill="#F5ECD7" stroke="#111" strokeWidth="1.5" />
-          <polygon points="1,-10 3,6 -1,6" fill="#8B1A1A" stroke="#111" strokeWidth="1" />
-        </g>
-
-        {/* Arms hanging */}
-        <path d="M -5 -5 L 5 10" stroke="#111" strokeWidth="4" strokeLinecap="square" fill="none" />
-        <path d="M 10 -5 L 20 10" stroke="#111" strokeWidth="4" strokeLinecap="square" fill="none" />
-
-        {/* Head — side profile, looking down */}
-        <PicassoSideHead transform="translate(16, -15) rotate(40)" />
-
-        {/* Vomit — angular green burst polygons */}
-        <g transform="translate(28, 2)">
-          <polygon points="-6,0 0,-8 6,0 4,8 -4,8" fill="#5A9A20" opacity="0.85" stroke="#111" strokeWidth="1" />
-          <polygon points="4,2 12,-4 14,4 8,10" fill="#7ABA30" opacity="0.8" stroke="#111" strokeWidth="1" />
-          <polygon points="-4,6 2,10 0,16 -6,14" fill="#5A9A20" opacity="0.7" />
-        </g>
-      </g>
-    );
-  }
-
-  // Crying reaction
-  if (viewState === 'crying') {
-    return (
-      <g transform={`translate(${x}, ${y})`} style={{ opacity, transition: 'opacity 0.5s ease' }}>
-        <polygon points="-14,28 14,28 18,32 -18,32" fill="rgba(0,0,0,0.2)" />
-
-        {/* Legs */}
-        <path d="M -5 8 L -5 22 L -8 26" stroke="#111" strokeWidth="5" strokeLinecap="square" fill="none" />
-        <path d="M 5 8 L 5 22 L 8 26" stroke="#111" strokeWidth="5" strokeLinecap="square" fill="none" />
-        <polygon points="-14,25 -2,25 -2,29 -14,29" fill="#111" />
-        <polygon points="2,25 14,25 14,29 2,29" fill="#111" />
-
-        {/* Body */}
-        <polygon points="-8,-14 8,-14 10,8 -10,8" fill="#1A3A7A" stroke="#111" strokeWidth="2" />
-        <polygon points="-2,-14 2,-10 6,-14" fill="#F5ECD7" stroke="#111" strokeWidth="1.5" />
-        <polygon points="0,-10 2,6 -2,6" fill="#8B1A1A" stroke="#111" strokeWidth="1" />
-
-        {/* Arms raised to face */}
-        <path d="M -8 -10 L -8 -24" stroke="#111" strokeWidth="4" strokeLinecap="square" fill="none" />
-        <path d="M 8 -10 L 8 -24" stroke="#111" strokeWidth="4" strokeLinecap="square" fill="none" />
-        <polygon points="-10,-24 -8,-27 -6,-24 -8,-21" fill="#E8C49A" stroke="#111" strokeWidth="1" />
-        <polygon points="6,-24 8,-27 10,-24 8,-21" fill="#E8C49A" stroke="#111" strokeWidth="1" />
-
-        {/* Head — Picasso front head (facing camera, distressed) */}
-        <PicassoFrontHead transform="translate(0, -40)" />
-
-        {/* Tears — angular diamond drops */}
-        <polygon points="-5,-26 -4,-22 -3,-26 -4,-29" fill="#4A7AB0" opacity="0.9" />
-        <polygon points="3,-26 4,-22 5,-26 4,-29" fill="#4A7AB0" opacity="0.9" />
-        <polygon points="-6,-18 -5,-14 -4,-18 -5,-21" fill="#4A7AB0" opacity="0.7" />
-        <polygon points="4,-18 5,-14 6,-18 5,-21" fill="#4A7AB0" opacity="0.7" />
-      </g>
-    );
-  }
-
-  // Running reaction
-  if (viewState === 'running') {
-    return (
-      <g transform={`translate(${x}, ${y}) scale(${scaleX}, 1)`} style={{ opacity, transition: 'opacity 0.5s ease' }}>
-        {/* Shadow — elongated from speed */}
-        <polygon points="-10,28 24,28 28,32 -14,32" fill="rgba(0,0,0,0.2)" />
-
-        {/* Back leg — extended back */}
-        <path d="M 5 5 L 20 14 L 30 20" stroke="#111" strokeWidth="5" strokeLinecap="square" fill="none" />
-        <polygon points="26,18 38,18 38,22 26,22" fill="#111" transform="rotate(-20, 32, 20)" />
-
-        {/* Body — leaning forward */}
-        <g transform="rotate(-20)">
-          <polygon points="-6,-14 8,-14 10,8 -8,8" fill="#1A3A7A" stroke="#111" strokeWidth="2" />
-          <polygon points="-2,-14 2,-10 6,-14" fill="#F5ECD7" stroke="#111" strokeWidth="1.5" />
-          <polygon points="1,-10 3,6 -1,6" fill="#8B1A1A" stroke="#111" strokeWidth="1" />
-        </g>
-
-        {/* Front leg — lifted high */}
-        <path d="M -5 0 L -15 -5 L -20 5" stroke="#111" strokeWidth="5" strokeLinecap="square" fill="none" />
-        <polygon points="-26,3 -14,3 -14,7 -26,7" fill="#111" transform="rotate(15, -20, 5)" />
-
-        {/* Back arm — extended back */}
-        <path d="M -2 -18 L 14 -10" stroke="#111" strokeWidth="4" strokeLinecap="square" fill="none" />
-        <polygon points="12,-12 18,-8 16,-4 10,-8" fill="#E8C49A" stroke="#111" strokeWidth="1" />
-
-        {/* Front arm — pumping forward */}
-        <path d="M 4 -18 L -10 -28" stroke="#111" strokeWidth="4" strokeLinecap="square" fill="none" />
-        <polygon points="-14,-30 -8,-26 -6,-30 -12,-34" fill="#E8C49A" stroke="#111" strokeWidth="1" />
-
-        {/* Head — side Picasso, tilted back in panic */}
-        <PicassoSideHead transform="translate(6, -34) rotate(-12)" />
-
-        {/* Speed lines — bold angular slashes */}
-        <line x1="36" y1="-8" x2="50" y2="-10" stroke="#111" strokeWidth="2.5" strokeLinecap="round" />
-        <line x1="38" y1="2" x2="56" y2="2" stroke="#111" strokeWidth="2.5" strokeLinecap="round" />
-        <line x1="36" y1="12" x2="50" y2="10" stroke="#111" strokeWidth="2.5" strokeLinecap="round" />
-      </g>
-    );
-  }
-
-  // Front view (when turning)
-  if (viewState === 'front') {
-    return (
-      <g transform={`translate(${x}, ${y})`} style={{ opacity, transition: 'opacity 0.5s ease' }}>
-        <polygon points="-14,28 14,28 18,32 -18,32" fill="rgba(0,0,0,0.2)" />
-
-        {/* Legs */}
-        <path d="M -5 8 L -5 22 L -8 26" stroke="#111" strokeWidth="5" strokeLinecap="square" fill="none" />
-        <path d="M 5 8 L 5 22 L 8 26" stroke="#111" strokeWidth="5" strokeLinecap="square" fill="none" />
-        <polygon points="-14,25 -2,25 -2,29 -14,29" fill="#111" />
-        <polygon points="2,25 14,25 14,29 2,29" fill="#111" />
-
-        {/* Body — front view angular suit */}
-        <polygon points="-10,-14 10,-14 10,8 -10,8" fill="#1A3A7A" stroke="#111" strokeWidth="2" />
-        {/* Lapel seam */}
-        <line x1="0" y1="-14" x2="0" y2="8" stroke="#0E2456" strokeWidth="1.5" />
-        {/* Collar */}
-        <polygon points="-4,-14 0,-10 4,-14" fill="#F5ECD7" stroke="#111" strokeWidth="1.5" />
-        {/* Tie */}
-        <polygon points="-1,-10 1,-10 3,6 -3,6" fill="#8B1A1A" stroke="#111" strokeWidth="1" />
-
-        {/* Arms — at sides */}
-        <path d="M -10 -10 L -14 4" stroke="#111" strokeWidth="4" strokeLinecap="square" fill="none" />
-        <path d="M 10 -10 L 14 4" stroke="#111" strokeWidth="4" strokeLinecap="square" fill="none" />
-        <polygon points="-16,2 -12,4 -10,8 -14,6" fill="#E8C49A" stroke="#111" strokeWidth="1" />
-        <polygon points="10,4 14,2 16,6 12,8" fill="#E8C49A" stroke="#111" strokeWidth="1" />
-
-        {/* Head — Picasso front head */}
-        <PicassoFrontHead transform="translate(0, -30)" />
-      </g>
-    );
-  }
-
-  // Side view (normal walking)
   return (
-    <g transform={`translate(${x}, ${y}) scale(${scaleX}, 1)`} style={{ opacity, transition: 'opacity 0.5s ease' }}>
-      <polygon points="-14,28 14,28 18,32 -18,32" fill="rgba(0,0,0,0.2)" />
+    <g ref={shakeRef} style={{ opacity, transition: 'opacity 0.5s ease' }}>
+      {/* Shooting view */}
+      {viewState === 'shooting' && (
+        <g transform={`translate(${x}, ${y}) scale(${scaleX}, 1)`}>
+          <polygon points="-14,28 14,28 18,32 -18,32" fill="rgba(0,0,0,0.2)" />
+          <path d="M 3 8 L 5 20 L 8 26" stroke="#111" strokeWidth="5" strokeLinecap="square" fill="none" />
+          <polygon points="2,25 14,25 14,29 2,29" fill="#111" />
+          <path d="M -3 8 L -5 20 L -8 26" stroke="#111" strokeWidth="5" strokeLinecap="square" fill="none" />
+          <polygon points="-14,25 -2,25 -2,29 -14,29" fill="#111" />
+          <SuitBody />
+          <path d="M -4 -10 L 2 -24" stroke="#111" strokeWidth="4" strokeLinecap="square" fill="none" />
+          <PicassoSideHead transform="translate(4, -26) rotate(-10)" />
+          <path d="M 6 -10 L 6 -28" stroke="#111" strokeWidth="4" strokeLinecap="square" fill="none" />
+          <polygon points="2,-28 12,-28 12,-20 2,-20" fill="#888" stroke="#111" strokeWidth="2" />
+          <polygon points="4,-28 10,-28 10,-44 4,-44" fill="#AAA" stroke="#111" strokeWidth="2" />
+          <polygon points="4,-28 6,-28 6,-44 4,-44" fill="#CCC" />
+          <path d="M 2,-24 L -2,-24 L -2,-20 L 2,-20" stroke="#111" strokeWidth="1.5" fill="none" />
+          <polygon points="2,-28 6,-30 10,-28 8,-24 2,-24" fill="#E8C49A" stroke="#111" strokeWidth="1" />
+        </g>
+      )}
 
-      {/* Back leg (behind body, GSAP ref preserved) */}
-      <g ref={rightLegRef}>
-        <path d="M 3 8 L 5 20 L 8 26" stroke="#111" strokeWidth="5" strokeLinecap="square" fill="none" />
-        <polygon points="2,25 14,25 14,29 2,29" fill="#111" />
-      </g>
+      {/* Vomiting reaction */}
+      {viewState === 'vomiting' && (
+        <g transform={`translate(${x}, ${y})`}>
+          <polygon points="-14,28 14,28 18,32 -18,32" fill="rgba(0,0,0,0.2)" />
+          <path d="M -5 8 L -8 22 L -10 26" stroke="#111" strokeWidth="5" strokeLinecap="square" fill="none" />
+          <path d="M 5 8 L 2 22 L 0 26" stroke="#111" strokeWidth="5" strokeLinecap="square" fill="none" />
+          <polygon points="-16,25 -4,25 -4,29 -16,29" fill="#111" />
+          <polygon points="-6,25 6,25 6,29 -6,29" fill="#111" />
+          <g transform="rotate(30)">
+            <polygon points="-6,-14 8,-14 10,8 -8,8" fill="#1A3A7A" stroke="#111" strokeWidth="2" />
+            <polygon points="-2,-14 2,-10 6,-14" fill="#F5ECD7" stroke="#111" strokeWidth="1.5" />
+            <polygon points="1,-10 3,6 -1,6" fill="#8B1A1A" stroke="#111" strokeWidth="1" />
+          </g>
+          <path d="M -5 -5 L 5 10" stroke="#111" strokeWidth="4" strokeLinecap="square" fill="none" />
+          <path d="M 10 -5 L 20 10" stroke="#111" strokeWidth="4" strokeLinecap="square" fill="none" />
+          <PicassoSideHead transform="translate(16, -15) rotate(40)" />
+          <g transform="translate(28, 2)">
+            <polygon points="-6,0 0,-8 6,0 4,8 -4,8" fill="#5A9A20" opacity="0.85" stroke="#111" strokeWidth="1" />
+            <polygon points="4,2 12,-4 14,4 8,10" fill="#7ABA30" opacity="0.8" stroke="#111" strokeWidth="1" />
+            <polygon points="-4,6 2,10 0,16 -6,14" fill="#5A9A20" opacity="0.7" />
+          </g>
+        </g>
+      )}
 
-      {/* Suit body */}
-      <SuitBody />
+      {/* Crying reaction */}
+      {viewState === 'crying' && (
+        <g transform={`translate(${x}, ${y})`}>
+          <polygon points="-14,28 14,28 18,32 -18,32" fill="rgba(0,0,0,0.2)" />
+          <path d="M -5 8 L -5 22 L -8 26" stroke="#111" strokeWidth="5" strokeLinecap="square" fill="none" />
+          <path d="M 5 8 L 5 22 L 8 26" stroke="#111" strokeWidth="5" strokeLinecap="square" fill="none" />
+          <polygon points="-14,25 -2,25 -2,29 -14,29" fill="#111" />
+          <polygon points="2,25 14,25 14,29 2,29" fill="#111" />
+          <polygon points="-8,-14 8,-14 10,8 -10,8" fill="#1A3A7A" stroke="#111" strokeWidth="2" />
+          <polygon points="-2,-14 2,-10 6,-14" fill="#F5ECD7" stroke="#111" strokeWidth="1.5" />
+          <polygon points="0,-10 2,6 -2,6" fill="#8B1A1A" stroke="#111" strokeWidth="1" />
+          <path d="M -8 -10 L -8 -24" stroke="#111" strokeWidth="4" strokeLinecap="square" fill="none" />
+          <path d="M 8 -10 L 8 -24" stroke="#111" strokeWidth="4" strokeLinecap="square" fill="none" />
+          <polygon points="-10,-24 -8,-27 -6,-24 -8,-21" fill="#E8C49A" stroke="#111" strokeWidth="1" />
+          <polygon points="6,-24 8,-27 10,-24 8,-21" fill="#E8C49A" stroke="#111" strokeWidth="1" />
+          <PicassoFrontHead transform="translate(0, -40)" />
+          <polygon points="-5,-26 -4,-22 -3,-26 -4,-29" fill="#4A7AB0" opacity="0.9" />
+          <polygon points="3,-26 4,-22 5,-26 4,-29" fill="#4A7AB0" opacity="0.9" />
+          <polygon points="-6,-18 -5,-14 -4,-18 -5,-21" fill="#4A7AB0" opacity="0.7" />
+          <polygon points="4,-18 5,-14 6,-18 5,-21" fill="#4A7AB0" opacity="0.7" />
+        </g>
+      )}
 
-      {/* Back arm (GSAP ref preserved) */}
-      <g ref={leftArmRef}>
-        <path d="M -4 -10 L -10 4" stroke="#111" strokeWidth="4" strokeLinecap="square" fill="none" />
-        <polygon points="-12,2 -10,5 -8,2 -10,-1" fill="#E8C49A" stroke="#111" strokeWidth="1" />
-      </g>
+      {/* Running reaction */}
+      {viewState === 'running' && (
+        <g transform={`translate(${x}, ${y}) scale(${scaleX}, 1)`}>
+          <polygon points="-10,28 24,28 28,32 -14,32" fill="rgba(0,0,0,0.2)" />
+          <path d="M 5 5 L 20 14 L 30 20" stroke="#111" strokeWidth="5" strokeLinecap="square" fill="none" />
+          <polygon points="26,18 38,18 38,22 26,22" fill="#111" transform="rotate(-20, 32, 20)" />
+          <g transform="rotate(-20)">
+            <polygon points="-6,-14 8,-14 10,8 -8,8" fill="#1A3A7A" stroke="#111" strokeWidth="2" />
+            <polygon points="-2,-14 2,-10 6,-14" fill="#F5ECD7" stroke="#111" strokeWidth="1.5" />
+            <polygon points="1,-10 3,6 -1,6" fill="#8B1A1A" stroke="#111" strokeWidth="1" />
+          </g>
+          <path d="M -5 0 L -15 -5 L -20 5" stroke="#111" strokeWidth="5" strokeLinecap="square" fill="none" />
+          <polygon points="-26,3 -14,3 -14,7 -26,7" fill="#111" transform="rotate(15, -20, 5)" />
+          <path d="M -2 -18 L 14 -10" stroke="#111" strokeWidth="4" strokeLinecap="square" fill="none" />
+          <polygon points="12,-12 18,-8 16,-4 10,-8" fill="#E8C49A" stroke="#111" strokeWidth="1" />
+          <path d="M 4 -18 L -10 -28" stroke="#111" strokeWidth="4" strokeLinecap="square" fill="none" />
+          <polygon points="-14,-30 -8,-26 -6,-30 -12,-34" fill="#E8C49A" stroke="#111" strokeWidth="1" />
+          <PicassoSideHead transform="translate(6, -34) rotate(-12)" />
+          <line x1="36" y1="-8" x2="50" y2="-10" stroke="#111" strokeWidth="2.5" strokeLinecap="round" />
+          <line x1="38" y1="2" x2="56" y2="2" stroke="#111" strokeWidth="2.5" strokeLinecap="round" />
+          <line x1="36" y1="12" x2="50" y2="10" stroke="#111" strokeWidth="2.5" strokeLinecap="round" />
+        </g>
+      )}
 
-      {/* Front leg (GSAP ref preserved) */}
-      <g ref={leftLegRef}>
-        <path d="M -3 8 L -5 20 L -8 26" stroke="#111" strokeWidth="5" strokeLinecap="square" fill="none" />
-        <polygon points="-14,25 -2,25 -2,29 -14,29" fill="#111" />
-      </g>
+      {/* Front view (turning) */}
+      {viewState === 'front' && (
+        <g transform={`translate(${x}, ${y})`}>
+          <polygon points="-14,28 14,28 18,32 -18,32" fill="rgba(0,0,0,0.2)" />
+          <path d="M -5 8 L -5 22 L -8 26" stroke="#111" strokeWidth="5" strokeLinecap="square" fill="none" />
+          <path d="M 5 8 L 5 22 L 8 26" stroke="#111" strokeWidth="5" strokeLinecap="square" fill="none" />
+          <polygon points="-14,25 -2,25 -2,29 -14,29" fill="#111" />
+          <polygon points="2,25 14,25 14,29 2,29" fill="#111" />
+          <polygon points="-10,-14 10,-14 10,8 -10,8" fill="#1A3A7A" stroke="#111" strokeWidth="2" />
+          <line x1="0" y1="-14" x2="0" y2="8" stroke="#0E2456" strokeWidth="1.5" />
+          <polygon points="-4,-14 0,-10 4,-14" fill="#F5ECD7" stroke="#111" strokeWidth="1.5" />
+          <polygon points="-1,-10 1,-10 3,6 -3,6" fill="#8B1A1A" stroke="#111" strokeWidth="1" />
+          <path d="M -10 -10 L -14 4" stroke="#111" strokeWidth="4" strokeLinecap="square" fill="none" />
+          <path d="M 10 -10 L 14 4" stroke="#111" strokeWidth="4" strokeLinecap="square" fill="none" />
+          <polygon points="-16,2 -12,4 -10,8 -14,6" fill="#E8C49A" stroke="#111" strokeWidth="1" />
+          <polygon points="10,4 14,2 16,6 12,8" fill="#E8C49A" stroke="#111" strokeWidth="1" />
+          <PicassoFrontHead transform="translate(0, -30)" />
+        </g>
+      )}
 
-      {/* Front arm (GSAP ref preserved) */}
-      <g ref={rightArmRef}>
-        <path d="M 6 -10 L 12 4" stroke="#111" strokeWidth="4" strokeLinecap="square" fill="none" />
-        <polygon points="10,2 12,5 14,2 12,-1" fill="#E8C49A" stroke="#111" strokeWidth="1" />
-      </g>
-
-      {/* Head — Picasso side head */}
-      <PicassoSideHead transform="translate(4, -28)" />
+      {/* Side view (normal walking) */}
+      {viewState === 'side' && (
+        <g transform={`translate(${x}, ${y}) scale(${scaleX}, 1)`}>
+          <polygon points="-14,28 14,28 18,32 -18,32" fill="rgba(0,0,0,0.2)" />
+          <g ref={rightLegRef}>
+            <path d="M 3 8 L 5 20 L 8 26" stroke="#111" strokeWidth="5" strokeLinecap="square" fill="none" />
+            <polygon points="2,25 14,25 14,29 2,29" fill="#111" />
+          </g>
+          <SuitBody />
+          <g ref={leftArmRef}>
+            <path d="M -4 -10 L -10 4" stroke="#111" strokeWidth="4" strokeLinecap="square" fill="none" />
+            <polygon points="-12,2 -10,5 -8,2 -10,-1" fill="#E8C49A" stroke="#111" strokeWidth="1" />
+          </g>
+          <g ref={leftLegRef}>
+            <path d="M -3 8 L -5 20 L -8 26" stroke="#111" strokeWidth="5" strokeLinecap="square" fill="none" />
+            <polygon points="-14,25 -2,25 -2,29 -14,29" fill="#111" />
+          </g>
+          <g ref={rightArmRef}>
+            <path d="M 6 -10 L 12 4" stroke="#111" strokeWidth="4" strokeLinecap="square" fill="none" />
+            <polygon points="10,2 12,5 14,2 12,-1" fill="#E8C49A" stroke="#111" strokeWidth="1" />
+          </g>
+          <PicassoSideHead transform="translate(4, -28)" />
+        </g>
+      )}
     </g>
   );
 }
