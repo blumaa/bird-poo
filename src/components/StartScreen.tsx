@@ -3,25 +3,18 @@ import { Bird } from './Bird';
 
 interface StartScreenProps {
   onStart: () => void;
+  viewBoxHeight?: number;
 }
 
-export function StartScreen({ onStart }: StartScreenProps) {
+export function StartScreen({ onStart, viewBoxHeight = VIEWBOX.height }: StartScreenProps) {
   const cx = VIEWBOX.width / 2;
+  const extraTop = (viewBoxHeight - VIEWBOX.height) / 2;
 
   return (
     <g>
       {/* === Deep teal background === */}
-      <rect x="0" y="0" width={VIEWBOX.width} height={VIEWBOX.height} fill="#0D3B38" />
+      <rect x="0" y={-extraTop} width={VIEWBOX.width} height={viewBoxHeight} fill="#0D3B38" />
 
-      {/* === Outer border — bold black frame === */}
-      <rect
-        x="6" y="6"
-        width={VIEWBOX.width - 12}
-        height={VIEWBOX.height - 12}
-        fill="none"
-        stroke="#1A1A1A"
-        strokeWidth="3"
-      />
 
       {/* === Ben-Day dot band behind title area === */}
       <defs>
@@ -102,12 +95,47 @@ export function StartScreen({ onStart }: StartScreenProps) {
         isPlaying={true}
       />
 
+      {/* === Control hints — above START button === */}
+      <rect
+        x={cx - 140}
+        y="368"
+        width="280"
+        height="58"
+        rx="6"
+        fill="#1B2A4A"
+        stroke="#F5E6C8"
+        strokeWidth="1.5"
+        opacity="0.85"
+      />
+      <text
+        x={cx}
+        y="390"
+        textAnchor="middle"
+        fontSize="13"
+        fontFamily="Impact, 'Arial Black', sans-serif"
+        fill="#F5C518"
+        letterSpacing="1"
+      >
+        Arrow keys to fly  •  SPACE to poop
+      </text>
+      <text
+        x={cx}
+        y="414"
+        textAnchor="middle"
+        fontSize="13"
+        fontFamily="Impact, 'Arial Black', sans-serif"
+        fill="#F5C518"
+        letterSpacing="1"
+      >
+        Mobile: tap left/right • center to poop
+      </text>
+
       {/* === START button === */}
       <g onClick={onStart} style={{ cursor: 'pointer' }}>
         {/* Hard shadow */}
         <rect
           x={cx - 78}
-          y="392"
+          y="448"
           width="160"
           height="52"
           fill="#1A1A1A"
@@ -115,7 +143,7 @@ export function StartScreen({ onStart }: StartScreenProps) {
         {/* Button face */}
         <rect
           x={cx - 82}
-          y="388"
+          y="444"
           width="160"
           height="52"
           fill="#F5C518"
@@ -124,7 +152,7 @@ export function StartScreen({ onStart }: StartScreenProps) {
         />
         <text
           x={cx - 2}
-          y="422"
+          y="478"
           textAnchor="middle"
           fontSize="26"
           fontFamily="Impact, 'Arial Black', sans-serif"
@@ -135,28 +163,6 @@ export function StartScreen({ onStart }: StartScreenProps) {
           START
         </text>
       </g>
-
-      {/* === Control hints === */}
-      <text
-        x={cx}
-        y="468"
-        textAnchor="middle"
-        fontSize="11"
-        fontFamily="Arial, sans-serif"
-        fill="#F5E6C8"
-      >
-        Arrow keys to fly  •  SPACE to poop
-      </text>
-      <text
-        x={cx}
-        y="486"
-        textAnchor="middle"
-        fontSize="11"
-        fontFamily="Arial, sans-serif"
-        fill="#F5E6C8"
-      >
-        Mobile: tap left/right to move, center to poop
-      </text>
     </g>
   );
 }

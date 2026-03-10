@@ -12,7 +12,7 @@ interface BulletProps {
 
 const BULLET_SPEED = 0.8; // seconds to travel from startY to BIRD_Y
 const HIT_TOLERANCE = 30;
-const OFF_SCREEN_Y = -20;
+const OFF_SCREEN_Y = -200;
 
 export function Bullet({ startX, startY, getBirdX, onHit, onMiss }: BulletProps) {
   const bulletRef = useRef<SVGGElement>(null);

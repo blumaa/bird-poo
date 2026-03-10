@@ -3,7 +3,8 @@ import { VIEWBOX } from '../utils/constants';
 
 const SUN_ANGLES = [0, 45, 90, 135, 180, 225, 270, 315];
 
-export const SkyBackground = memo(function SkyBackground() {
+export const SkyBackground = memo(function SkyBackground({ viewBoxHeight }: { viewBoxHeight: number }) {
+  const extraTop = (viewBoxHeight - 600) / 2;
   return (
     <g>
       <defs>
@@ -17,10 +18,10 @@ export const SkyBackground = memo(function SkyBackground() {
         </pattern>
       </defs>
 
-      {/* Sky — flat primary blue */}
-      <rect x="0" y="0" width={VIEWBOX.width} height={VIEWBOX.height} fill="#0055CC" />
+      {/* Sky — flat primary blue, extends into negative Y for taller screens */}
+      <rect x="0" y={-extraTop} width={VIEWBOX.width} height={viewBoxHeight} fill="#0055CC" />
       {/* Ben-Day halftone overlay */}
-      <rect x="0" y="0" width={VIEWBOX.width} height={VIEWBOX.height} fill="url(#licht-sky-dots)" opacity="0.25" />
+      <rect x="0" y={-extraTop} width={VIEWBOX.width} height={viewBoxHeight} fill="url(#licht-sky-dots)" opacity="0.25" />
 
       {/* Sun — flat yellow, thick black outline, bold rays */}
       <g transform="translate(350, 50)">

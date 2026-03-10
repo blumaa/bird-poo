@@ -38,11 +38,11 @@ const FLOWERS = [
   { x: 380, color: K.dustyRose,  size: 5 },
 ];
 
-export const GroundBackground = memo(function GroundBackground() {
+export const GroundBackground = memo(function GroundBackground({ viewBoxHeight }: { viewBoxHeight: number }) {
   return (
     <g>
       {/* ── GROUND — Klee patchwork mosaic of greens ── */}
-      <rect x="0" y="500" width={VIEWBOX.width} height="100" fill={K.sage} />
+      <rect x="0" y="500" width={VIEWBOX.width} height={viewBoxHeight} fill={K.sage} />
       {/* Overlapping coloured patches — like Klee's field paintings */}
       <rect x="0"   y="500" width="82"  height="58" fill={K.paleGreen} opacity="0.55" />
       <rect x="78"  y="500" width="58"  height="48" fill={K.moss}      opacity="0.45" />

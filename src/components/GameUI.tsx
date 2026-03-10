@@ -21,6 +21,7 @@ interface GameUIProps {
   level: number;
   ammo: number;
   birdLives: number;
+  viewBoxHeight?: number;
 }
 
 // Unique filter IDs scoped to this component to avoid SVG defs collisions
@@ -326,7 +327,7 @@ function LivesBlock({ birdLives }: { birdLives: number }) {
         letterSpacing="2"
         filter={`url(#${FILTER_IDS.neonGreen})`}
       >
-        LIVES
+        HEALTH
       </text>
 
       {/* Heart icons */}
@@ -345,9 +346,11 @@ function LivesBlock({ birdLives }: { birdLives: number }) {
 // --------------------------------------------------------------------
 // Root component
 // --------------------------------------------------------------------
-export function GameUI({ score, level, ammo, birdLives }: GameUIProps) {
+export function GameUI({ score, level, ammo, birdLives, viewBoxHeight = 600 }: GameUIProps) {
+  // Move to top of viewport but leave room for the notch/Dynamic Island (~50px in viewBox coords)
+  const offsetY = -(viewBoxHeight - 600) / 2 + 50;
   return (
-    <g>
+    <g transform={`translate(0, ${offsetY})`}>
       <ArcadeDefs />
 
       {/* Left panel */}

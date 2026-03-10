@@ -19,6 +19,8 @@ import { TouchZoneHints } from './components/TouchZoneHints';
 import { HudButtons } from './components/HudButtons';
 import { HighScoresModal } from './components/HighScoresModal';
 import { VIEWBOX, PLAYER_Y } from './utils/constants';
+import { useViewBoxHeight } from './hooks/useViewBox';
+import { haptics } from './hooks/useHaptics';
 import type { PoopData, BulletData } from './types/game';
 
 export function Game() {
@@ -78,6 +80,7 @@ export function Game() {
   // Delay game over overlay to let hurt animation finish
   useEffect(() => {
     if (state.status === 'dying') {
+      haptics.gameOver();
       const timeout = setTimeout(finalizeGameOver, 1200);
       return () => clearTimeout(timeout);
     }
@@ -124,21 +127,26 @@ export function Game() {
   const isPlaying = state.status === 'playing';
 
   const handleBirdMove = useCallback((x: number) => {
-    const currentX = state.birdX;
+    const currentX = birdXRef.current;
     if (x < currentX) {
       setBirdDirection('left');
     } else if (x > currentX) {
       setBirdDirection('right');
     }
     moveBird(x);
-  }, [moveBird, state.birdX]);
+  }, [moveBird]);
+
+  const handleSpawnPoop = useCallback((poop: PoopData) => {
+    haptics.poopDrop();
+    spawnPoop(poop);
+  }, [spawnPoop]);
 
   const { handleTouchStart, handleTouchEnd } = useBirdControls({
     birdX: state.birdX,
     ammo: state.ammo,
     isPlaying,
     onMove: handleBirdMove,
-    onPoop: spawnPoop,
+    onPoop: handleSpawnPoop,
   });
 
   useHumanAI({
@@ -172,6 +180,7 @@ export function Game() {
   const getBirdX = useCallback(() => birdXRef.current, []);
 
   const handleBulletHit = useCallback((id: string) => {
+    haptics.birdHit();
     birdHit();
     removeBullet(id);
   }, [birdHit, removeBullet]);
@@ -185,6 +194,7 @@ export function Game() {
   }, [startGame]);
 
   const handleHit = useCallback((id: string) => {
+    haptics.hitHuman();
     hitHuman(id);
   }, [hitHuman]);
 
@@ -202,10 +212,12 @@ export function Game() {
     resetGame();
   }, [resetGame]);
 
+  const viewBoxHeight = useViewBoxHeight();
+
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%' }}>
     <svg
-      viewBox={`0 0 ${VIEWBOX.width} ${VIEWBOX.height}`}
+      viewBox={`0 ${-(viewBoxHeight - VIEWBOX.height) / 2} ${VIEWBOX.width} ${viewBoxHeight}`}
       style={{
         width: '100%',
         height: '100%',
@@ -218,12 +230,12 @@ export function Game() {
       onTouchCancel={handleTouchEnd}
     >
       {/* Sky with sun and clouds */}
-      <SkyBackground />
+      <SkyBackground viewBoxHeight={viewBoxHeight} />
 
       {/* Ground with grass, flowers, and path */}
-      <GroundBackground />
+      <GroundBackground viewBoxHeight={viewBoxHeight} />
 
-      {state.status === 'idle' && <StartScreen onStart={handleStart} />}
+      {state.status === 'idle' && <StartScreen onStart={handleStart} viewBoxHeight={viewBoxHeight} />}
 
       {(state.status === 'playing' || state.status === 'paused' || state.status === 'dying') && (
         <>
@@ -232,6 +244,7 @@ export function Game() {
             level={state.level}
             ammo={state.ammo}
             birdLives={state.birdLives}
+            viewBoxHeight={viewBoxHeight}
           />
 
           <Bird x={state.birdX} direction={birdDirection} isPlaying={isPlaying} isHurt={birdHurt} />
@@ -280,10 +293,8 @@ export function Game() {
 
           {/* HUD buttons — inside SVG so they scale with the viewBox */}
           <HudButtons
-            isPaused={state.status === 'paused'}
-            onPause={pauseGame}
-            onResume={resumeGame}
-            onShowScores={() => setShowScores(true)}
+            onShowScores={() => { pauseGame(); setShowScores(true); }}
+            viewBoxHeight={viewBoxHeight}
           />
         </>
       )}
@@ -310,7 +321,10 @@ export function Game() {
     )}
 
     {showScores && (
-      <HighScoresModal scores={scores} onClose={() => setShowScores(false)} />
+      <HighScoresModal scores={scores} onClose={() => {
+        setShowScores(false);
+        if (state.status === 'paused') resumeGame();
+      }} />
     )}
     </div>
   );

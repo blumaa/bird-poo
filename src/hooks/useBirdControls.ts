@@ -114,6 +114,10 @@ export function useBirdControls({ birdX, ammo, isPlaying, onMove, onPoop }: UseB
   const handleTouchStart = useCallback((e: React.TouchEvent<SVGSVGElement>) => {
     if (!isPlayingRef.current) return;
 
+    // Ignore touches on HUD buttons (they handle their own events)
+    const target = e.target as Element;
+    if (target.closest?.('[data-hud-button]')) return;
+
     const touch = e.touches[0];
     const svg = e.currentTarget;
     const rect = svg.getBoundingClientRect();

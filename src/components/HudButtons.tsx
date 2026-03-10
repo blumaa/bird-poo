@@ -1,79 +1,63 @@
-// SVG-native buttons — live inside the <svg> so they scale with the viewBox.
-// Positioned in the bottom-left of the 400×600 viewBox.
+import { useRef, useEffect } from 'react';
 
 interface HudButtonsProps {
-  isPaused: boolean;
-  onPause: () => void;
-  onResume: () => void;
   onShowScores: () => void;
+  viewBoxHeight: number;
 }
 
 const W = 42;
 const H = 28;
-const Y = 560;
-const R = 4; // corner radius
+const R = 4;
 
-function SvgButton({
-  x,
-  y,
-  label,
-  bg,
-  onClick,
-}: {
-  x: number;
-  y: number;
-  label: string;
-  bg: string;
-  onClick: () => void;
-}) {
-  const handleTouch = (e: React.TouchEvent) => {
-    e.stopPropagation();
-    onClick();
-  };
+function StarIcon({ x, y }: { x: number; y: number }) {
+  const cx = x + W / 2;
+  const cy = y + H / 2;
+  const points = [];
+  for (let i = 0; i < 5; i++) {
+    const outerAngle = (i * 72 - 90) * (Math.PI / 180);
+    const innerAngle = ((i * 72 + 36) - 90) * (Math.PI / 180);
+    points.push(`${cx + 7 * Math.cos(outerAngle)},${cy + 7 * Math.sin(outerAngle)}`);
+    points.push(`${cx + 3 * Math.cos(innerAngle)},${cy + 3 * Math.sin(innerAngle)}`);
+  }
+  return <polygon points={points.join(' ')} fill="#F5E6C8" />;
+}
+
+export function HudButtons({ onShowScores, viewBoxHeight }: HudButtonsProps) {
+  const ref = useRef<SVGGElement>(null);
+  const onShowScoresRef = useRef(onShowScores);
+  onShowScoresRef.current = onShowScores;
+
+  const extraBottom = (viewBoxHeight - 600) / 2;
+  const y = 600 + extraBottom - 40;
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+
+    const handler = (e: TouchEvent) => {
+      e.stopPropagation();
+      e.stopImmediatePropagation();
+      e.preventDefault();
+      onShowScoresRef.current();
+    };
+
+    el.addEventListener('touchstart', handler, { passive: false });
+    return () => el.removeEventListener('touchstart', handler);
+  }, []);
 
   return (
     <g
-      onClick={onClick}
-      onTouchEnd={handleTouch}
+      ref={ref}
+      data-hud-button
+      onClick={onShowScores}
       style={{ cursor: 'pointer' }}
     >
       {/* Hard shadow */}
-      <rect x={x + 3} y={y + 3} width={W} height={H} rx={R} fill="#1A1A1A" />
+      <rect x={11} y={y + 3} width={W} height={H} rx={R} fill="#1A1A1A" />
       {/* Button face */}
-      <rect x={x} y={y} width={W} height={H} rx={R} fill={bg} stroke="#1A1A1A" strokeWidth="2" />
-      {/* Label */}
-      <text
-        x={x + W / 2}
-        y={y + H / 2 + 1}
-        textAnchor="middle"
-        dominantBaseline="middle"
-        fontSize="14"
-        fontFamily="Arial, sans-serif"
-        fill="#F5E6C8"
-      >
-        {label}
-      </text>
-    </g>
-  );
-}
-
-export function HudButtons({ isPaused, onPause, onResume, onShowScores }: HudButtonsProps) {
-  return (
-    <g>
-      <SvgButton
-        x={8}
-        y={Y}
-        label={isPaused ? '▶' : '⏸'}
-        bg="#1B2A4A"
-        onClick={isPaused ? onResume : onPause}
-      />
-      <SvgButton
-        x={56}
-        y={Y}
-        label="★"
-        bg="#0D5C55"
-        onClick={onShowScores}
-      />
+      <rect x={8} y={y} width={W} height={H} rx={R} fill="#0D5C55" stroke="#1A1A1A" strokeWidth="2" />
+      {/* Icon */}
+      <StarIcon x={8} y={y} />
     </g>
   );
 }
