@@ -67,7 +67,9 @@ export function useBirdControls({ birdX, ammo, isPlaying, onMove, onPoop }: UseB
         BOUNDARY_MARGIN,
         Math.min(VIEWBOX.width - BOUNDARY_MARGIN, birdXRef.current + dx)
       );
-      onMoveRef.current(newX);
+      if (newX !== birdXRef.current) {
+        onMoveRef.current(newX);
+      }
     }
 
     animationFrameRef.current = requestAnimationFrame(updatePosition);

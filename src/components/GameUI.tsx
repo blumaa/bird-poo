@@ -346,7 +346,7 @@ function LivesBlock({ birdLives }: { birdLives: number }) {
 // --------------------------------------------------------------------
 // Root component
 // --------------------------------------------------------------------
-export function GameUI({ score, level, ammo, birdLives, viewBoxHeight = 600 }: GameUIProps) {
+export const GameUI = memo(function GameUI({ score, level, ammo, birdLives, viewBoxHeight = 600 }: GameUIProps) {
   // Move to top of viewport but leave room for the notch/Dynamic Island (~50px in viewBox coords)
   const offsetY = -(viewBoxHeight - 600) / 2 + 50;
   return (
@@ -373,4 +373,4 @@ export function GameUI({ score, level, ammo, birdLives, viewBoxHeight = 600 }: G
       <LivesBlock birdLives={birdLives} />
     </g>
   );
-}
+});

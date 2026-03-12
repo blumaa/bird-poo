@@ -1,95 +1,138 @@
 import { useEffect, useRef } from 'react';
-import type { BulletData, HumanReaction } from '../types/game';
+import type { BulletData, HumanData } from '../types/game';
 import { PLAYER_Y, getLevelConfig } from '../utils/constants';
 
 interface UseHumanShootingParams {
-  humanX: number;
+  humans: HumanData[];
   level: number;
   isPlaying: boolean;
-  humanReaction?: HumanReaction;
-  isRespawning?: boolean;
-  onStartShooting: () => void;
-  onStopShooting: () => void;
+  onStartShooting: (humanId: string) => void;
+  onStopShooting: (humanId: string) => void;
   onSpawnBullet: (bullet: BulletData) => void;
 }
 
-const SHOOTING_POSE_DURATION = 1000; // 1 second to aim and shoot
+const SHOOTING_POSE_DURATION = 1000;
+const TICK_RATE = 200; // ms — check all humans every 200ms
+
+/**
+ * Per-human shooting state machine.
+ * States: 'waiting' → 'aiming' → fires bullet → back to 'waiting'
+ */
+interface ShootingState {
+  phase: 'waiting' | 'aiming';
+  nextActionAt: number; // timestamp when next transition should happen
+}
 
 export function useHumanShooting({
-  humanX,
+  humans,
   level,
   isPlaying,
-  humanReaction = 'none',
-  isRespawning = false,
   onStartShooting,
   onStopShooting,
   onSpawnBullet,
 }: UseHumanShootingParams): void {
-  const shootTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const poseTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  // Use refs for all values to avoid effect recreation
-  const humanXRef = useRef(humanX);
+  const statesRef = useRef<Map<string, ShootingState>>(new Map());
+  const humansRef = useRef(humans);
   const levelRef = useRef(level);
   const onStartShootingRef = useRef(onStartShooting);
   const onStopShootingRef = useRef(onStopShooting);
   const onSpawnBulletRef = useRef(onSpawnBullet);
 
-  humanXRef.current = humanX;
+  humansRef.current = humans;
   levelRef.current = level;
   onStartShootingRef.current = onStartShooting;
   onStopShootingRef.current = onStopShooting;
   onSpawnBulletRef.current = onSpawnBullet;
 
   useEffect(() => {
-    // Don't shoot while reacting or respawning
-    if (!isPlaying || humanReaction !== 'none' || isRespawning) {
-      // Clear all timeouts when not playing
-      if (shootTimeoutRef.current) {
-        clearTimeout(shootTimeoutRef.current);
-        shootTimeoutRef.current = null;
-      }
-      if (poseTimeoutRef.current) {
-        clearTimeout(poseTimeoutRef.current);
-        poseTimeoutRef.current = null;
-      }
+    if (!isPlaying) {
+      statesRef.current.clear();
       return;
     }
 
-    const scheduleShot = () => {
+    function getRandomWait(): number {
       const { minShootInterval, maxShootInterval } = getLevelConfig(levelRef.current);
-      const interval = minShootInterval + Math.random() * (maxShootInterval - minShootInterval);
+      return minShootInterval + Math.random() * (maxShootInterval - minShootInterval);
+    }
 
-      shootTimeoutRef.current = setTimeout(() => {
-        // Start shooting pose
-        onStartShootingRef.current();
+    function tick() {
+      const now = Date.now();
+      const currentHumans = humansRef.current;
 
-        // After pose duration, spawn bullet and return to walking
-        poseTimeoutRef.current = setTimeout(() => {
+      // Remove states for humans that no longer exist
+      for (const id of statesRef.current.keys()) {
+        if (!currentHumans.find(h => h.id === id)) {
+          statesRef.current.delete(id);
+        }
+      }
+
+      for (const human of currentHumans) {
+        const canAct = human.reaction === 'none' && !human.isRespawning;
+
+        // Ensure every human has a state entry
+        if (!statesRef.current.has(human.id)) {
+          statesRef.current.set(human.id, {
+            phase: 'waiting',
+            nextActionAt: now + getRandomWait(),
+          });
+          continue;
+        }
+
+        const s = statesRef.current.get(human.id)!;
+
+        // If human is reacting/respawning, reset to waiting
+        if (!canAct) {
+          if (s.phase === 'aiming') {
+            onStopShootingRef.current(human.id);
+          }
+          statesRef.current.set(human.id, {
+            phase: 'waiting',
+            nextActionAt: now + getRandomWait(),
+          });
+          continue;
+        }
+
+        if (now < s.nextActionAt) continue;
+
+        if (s.phase === 'waiting') {
+          // Transition to aiming
+          onStartShootingRef.current(human.id);
+          statesRef.current.set(human.id, {
+            phase: 'aiming',
+            nextActionAt: now + SHOOTING_POSE_DURATION,
+          });
+        } else if (s.phase === 'aiming') {
+          // Fire bullet and go back to waiting
           const bullet: BulletData = {
-            id: `bullet-${Date.now()}`,
-            x: humanXRef.current,
-            y: PLAYER_Y - 30, // Start from gun position
+            id: `bullet-${human.id}-${now}`,
+            x: human.x,
+            y: PLAYER_Y - 30,
+            characterType: human.character,
           };
           onSpawnBulletRef.current(bullet);
-          onStopShootingRef.current();
+          onStopShootingRef.current(human.id);
+          statesRef.current.set(human.id, {
+            phase: 'waiting',
+            nextActionAt: now + getRandomWait(),
+          });
+        }
+      }
+    }
 
-          // Schedule next shot
-          scheduleShot();
-        }, SHOOTING_POSE_DURATION);
-      }, interval);
-    };
+    // Run first tick immediately
+    tick();
 
-    // Start the shooting cycle
-    scheduleShot();
+    const intervalId = setInterval(tick, TICK_RATE);
 
     return () => {
-      if (shootTimeoutRef.current) {
-        clearTimeout(shootTimeoutRef.current);
+      clearInterval(intervalId);
+      // Stop any humans left in aiming pose
+      for (const [humanId, s] of statesRef.current.entries()) {
+        if (s.phase === 'aiming') {
+          onStopShootingRef.current(humanId);
+        }
       }
-      if (poseTimeoutRef.current) {
-        clearTimeout(poseTimeoutRef.current);
-      }
+      statesRef.current.clear();
     };
-  }, [isPlaying, humanReaction, isRespawning]); // Removed callback deps
+  }, [isPlaying]);
 }

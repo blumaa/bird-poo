@@ -1,13 +1,13 @@
-import { useRef, useEffect, useState } from 'react';
+import { memo, useRef, useEffect, useState } from 'react';
 import { gsap } from 'gsap';
 import { HUMAN_HIT_Y, getLevelConfig, checkCollision } from '../utils/constants';
-import type { PoopData } from '../types/game';
+import type { PoopData, HumanData } from '../types/game';
 
 interface PoopProps {
   poop: PoopData;
   level: number;
-  getHumanX: () => number;
-  onHit: (id: string) => void;
+  getHumans: () => HumanData[];
+  onHit: (poopId: string, humanId: string) => void;
   onMiss: (id: string) => void;
   onRemove: (id: string) => void;
 }
@@ -15,7 +15,13 @@ interface PoopProps {
 const GROUND_SPLAT_Y = 516; // Road surface at human's feet level
 const HEAD_SPLAT_Y = HUMAN_HIT_Y + 5;
 
-export function Poop({ poop, level, getHumanX, onHit, onMiss, onRemove }: PoopProps) {
+function findHitHuman(humans: HumanData[], poopX: number): HumanData | undefined {
+  return humans.find(h =>
+    h.reaction === 'none' && !h.isRespawning && checkCollision(h.x, poopX)
+  );
+}
+
+export const Poop = memo(function Poop({ poop, level, getHumans, onHit, onMiss, onRemove }: PoopProps) {
   const poopRef = useRef<SVGGElement>(null);
   const splatRef = useRef<SVGGElement>(null);
   const hasLandedRef = useRef(false);
@@ -24,13 +30,13 @@ export function Poop({ poop, level, getHumanX, onHit, onMiss, onRemove }: PoopPr
   const [showSplat, setShowSplat] = useState(false);
   const [splatPos, setSplatPos] = useState({ x: poop.x, y: GROUND_SPLAT_Y });
 
-  const getHumanXRef = useRef(getHumanX);
+  const getHumansRef = useRef(getHumans);
   const onHitRef = useRef(onHit);
   const onMissRef = useRef(onMiss);
   const onRemoveRef = useRef(onRemove);
   const levelRef = useRef(level);
 
-  getHumanXRef.current = getHumanX;
+  getHumansRef.current = getHumans;
   onHitRef.current = onHit;
   onMissRef.current = onMiss;
   onRemoveRef.current = onRemove;
@@ -50,26 +56,29 @@ export function Poop({ poop, level, getHumanX, onHit, onMiss, onRemove }: PoopPr
       onUpdate: () => {
         if (hasLandedRef.current || !poopRef.current) return;
         const currentY = gsap.getProperty(poopRef.current, 'y') as number;
-        if (currentY < HUMAN_HIT_Y) return; // not in human's zone yet
-        const humanX = getHumanXRef.current();
-        if (checkCollision(humanX, poop.x)) {
+        if (currentY < HUMAN_HIT_Y) return;
+        const humans = getHumansRef.current();
+        const hitHuman = findHitHuman(humans, poop.x);
+        if (hitHuman) {
           hasLandedRef.current = true;
           animationRef.current?.kill();
-          setSplatPos({ x: humanX, y: HEAD_SPLAT_Y });
+          setSplatPos({ x: hitHuman.x, y: HEAD_SPLAT_Y });
           setShowSplat(true);
-          onHitRef.current(poop.id);
+          onHitRef.current(poop.id, hitHuman.id);
         }
       },
       onComplete: () => {
         if (hasLandedRef.current) return;
         hasLandedRef.current = true;
-        const humanX = getHumanXRef.current();
-        const isHit = checkCollision(humanX, poop.x);
-        setSplatPos({ x: isHit ? humanX : poop.x, y: GROUND_SPLAT_Y });
-        setShowSplat(true);
-        if (isHit) {
-          onHitRef.current(poop.id);
+        const humans = getHumansRef.current();
+        const hitHuman = findHitHuman(humans, poop.x);
+        if (hitHuman) {
+          setSplatPos({ x: hitHuman.x, y: GROUND_SPLAT_Y });
+          setShowSplat(true);
+          onHitRef.current(poop.id, hitHuman.id);
         } else {
+          setSplatPos({ x: poop.x, y: GROUND_SPLAT_Y });
+          setShowSplat(true);
           onMissRef.current(poop.id);
         }
       },
@@ -142,4 +151,4 @@ export function Poop({ poop, level, getHumanX, onHit, onMiss, onRemove }: PoopPr
       )}
     </>
   );
-}
+});

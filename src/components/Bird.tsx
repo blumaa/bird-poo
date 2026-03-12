@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { memo, useEffect, useRef } from 'react';
 import { gsap } from 'gsap';
 import { BIRD_Y } from '../utils/constants';
 import { BirdGraphic } from './BirdGraphic';
@@ -11,7 +11,7 @@ interface BirdProps {
   isHurt?: boolean;
 }
 
-export function Bird({ x, y, direction, isPlaying, isHurt = false }: BirdProps) {
+export const Bird = memo(function Bird({ x, y, direction, isPlaying, isHurt = false }: BirdProps) {
   const scaleX = direction === 'left' ? -1 : 1;
   const wingsRef = useRef<SVGGElement>(null);
   const birdRef = useRef<SVGGElement>(null);
@@ -77,4 +77,4 @@ export function Bird({ x, y, direction, isPlaying, isHurt = false }: BirdProps) 
       />
     </g>
   );
-}
+});

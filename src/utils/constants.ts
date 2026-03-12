@@ -1,4 +1,4 @@
-import type { LevelConfig, GameState } from '../types/game';
+import type { LevelConfig, GameState, HumanData, HumanCharacter } from '../types/game';
 
 export const VIEWBOX = {
   width: 400,
@@ -19,17 +19,48 @@ export const AMMO_REGEN_INTERVAL = 2000;
 export const INITIAL_BIRD_LIVES = 3;
 export const HUMAN_HIT_Y = PLAYER_Y - 45; // Top of human hit zone (above head)
 
+const HUMAN_BOUNDARY_MARGIN = 20;
+
 // 100 points per level, 10 points per hit = 10 hits per level
 const HITS_PER_LEVEL = 10;
+
+const CHARACTERS: HumanCharacter[] = ['suit', 'chef', 'tourist', 'diva'];
+
+export function randomCharacter(): HumanCharacter {
+  return CHARACTERS[Math.floor(Math.random() * CHARACTERS.length)];
+}
+
+export function getHumanCount(level: number): number {
+  if (level >= 15) return 4;
+  if (level >= 10) return 3;
+  if (level >= 5) return 2;
+  return 1;
+}
+
+export function createHuman(id: string): HumanData {
+  return {
+    id,
+    x: HUMAN_BOUNDARY_MARGIN + Math.random() * (VIEWBOX.width - HUMAN_BOUNDARY_MARGIN * 2),
+    direction: Math.random() < 0.5 ? 'left' : 'right',
+    state: 'walking',
+    reaction: 'none',
+    isRespawning: false,
+    character: randomCharacter(),
+  };
+}
 
 export const INITIAL_STATE: GameState = {
   status: 'idle',
   birdX: VIEWBOX.width / 2,
-  humanX: VIEWBOX.width / 2,
-  humanDirection: 'right',
-  humanState: 'walking',
-  humanReaction: 'none',
-  isHumanRespawning: false,
+  humans: [{
+    id: 'human-0',
+    x: VIEWBOX.width / 2,
+    direction: 'right',
+    state: 'walking',
+    reaction: 'none',
+    isRespawning: false,
+    character: 'suit',
+  }],
   score: 0,
   levelHits: 0,
   totalHits: 0,

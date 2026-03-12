@@ -1,6 +1,6 @@
 import { useReducer, useCallback } from 'react';
-import type { GameState, GameAction, PoopData, BulletData, HumanReaction } from '../types/game';
-import { INITIAL_STATE, VIEWBOX, calculateLevel, MAX_AMMO } from '../utils/constants';
+import type { GameState, GameAction, PoopData, BulletData, HumanReaction, HumanData } from '../types/game';
+import { INITIAL_STATE, VIEWBOX, calculateLevel, MAX_AMMO, getHumanCount, createHuman, randomCharacter } from '../utils/constants';
 
 const REACTIONS: HumanReaction[] = ['vomiting', 'crying', 'running'];
 
@@ -15,6 +15,10 @@ function randomHumanX(): number {
   return HUMAN_BOUNDARY_MARGIN + Math.random() * (VIEWBOX.width - HUMAN_BOUNDARY_MARGIN * 2);
 }
 
+function updateHuman(humans: HumanData[], humanId: string, updater: (h: HumanData) => HumanData): HumanData[] {
+  return humans.map(h => h.id === humanId ? updater(h) : h);
+}
+
 export function gameReducer(state: GameState, action: GameAction): GameState {
   switch (action.type) {
     case 'START_GAME':
@@ -22,8 +26,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         ...INITIAL_STATE,
         status: 'playing',
         birdX: VIEWBOX.width / 2,
-        humanX: VIEWBOX.width / 2,
-        humanDirection: 'right',
+        humans: [createHuman('human-0')],
         ammo: MAX_AMMO,
         maxAmmo: MAX_AMMO,
       };
@@ -41,7 +44,12 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         HUMAN_BOUNDARY_MARGIN,
         Math.min(VIEWBOX.width - HUMAN_BOUNDARY_MARGIN, action.x)
       );
-      return { ...state, humanX: clampedX, humanDirection: action.direction };
+      return {
+        ...state,
+        humans: updateHuman(state.humans, action.humanId, h => ({
+          ...h, x: clampedX, direction: action.direction,
+        })),
+      };
     }
 
     case 'SPAWN_POOP':
@@ -56,8 +64,8 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       return { ...state, poops: state.poops.filter((p) => p.id !== action.id) };
 
     case 'HIT_HUMAN': {
-      // Ignore hits while already reacting or respawning
-      if (state.humanReaction !== 'none' || state.isHumanRespawning) {
+      const human = state.humans.find(h => h.id === action.humanId);
+      if (!human || human.reaction !== 'none' || human.isRespawning) {
         return state;
       }
       const newTotalHits = state.totalHits + 1;
@@ -71,39 +79,37 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         levelHits: newLevelHits,
         totalHits: newTotalHits,
         level: newLevel,
-        humanReaction: getRandomReaction(),
-        humanState: 'walking', // Stop shooting if was shooting
+        humans: updateHuman(state.humans, action.humanId, h => ({
+          ...h, reaction: getRandomReaction(), state: 'walking',
+        })),
       };
     }
 
-    case 'MISS_HUMAN': {
-      // No-op - poop removal handled separately after splat animation
+    case 'MISS_HUMAN':
       return state;
-    }
 
     case 'BIRD_HIT': {
       const newLives = state.birdLives - 1;
       if (newLives <= 0) {
-        return {
-          ...state,
-          birdLives: 0,
-          status: 'dying',
-        };
+        return { ...state, birdLives: 0, status: 'dying' };
       }
-      return {
-        ...state,
-        birdLives: newLives,
-      };
+      return { ...state, birdLives: newLives };
     }
 
     case 'FINALIZE_GAME_OVER':
       return { ...state, status: 'gameOver' };
 
     case 'START_SHOOTING':
-      return { ...state, humanState: 'shooting' };
+      return {
+        ...state,
+        humans: updateHuman(state.humans, action.humanId, h => ({ ...h, state: 'shooting' })),
+      };
 
     case 'STOP_SHOOTING':
-      return { ...state, humanState: 'walking' };
+      return {
+        ...state,
+        humans: updateHuman(state.humans, action.humanId, h => ({ ...h, state: 'walking' })),
+      };
 
     case 'SPAWN_BULLET':
       return { ...state, bullets: [...state.bullets, action.bullet] };
@@ -116,21 +122,52 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       return { ...state, ammo: state.ammo + 1 };
 
     case 'START_REACTION':
-      return { ...state, humanReaction: action.reaction, humanState: 'walking' };
+      return {
+        ...state,
+        humans: updateHuman(state.humans, action.humanId, h => ({
+          ...h, reaction: action.reaction, state: 'walking',
+        })),
+      };
 
     case 'END_REACTION':
-      return { ...state, humanReaction: 'none' };
+      return {
+        ...state,
+        humans: updateHuman(state.humans, action.humanId, h => ({ ...h, reaction: 'none' })),
+      };
 
     case 'START_RESPAWN':
-      return { ...state, isHumanRespawning: true, humanReaction: 'none' };
+      return {
+        ...state,
+        humans: updateHuman(state.humans, action.humanId, h => ({
+          ...h, isRespawning: true, reaction: 'none',
+        })),
+      };
 
     case 'FINISH_RESPAWN':
       return {
         ...state,
-        isHumanRespawning: false,
-        humanX: randomHumanX(),
-        humanDirection: Math.random() < 0.5 ? 'left' : 'right',
+        humans: updateHuman(state.humans, action.humanId, h => ({
+          ...h,
+          isRespawning: false,
+          x: randomHumanX(),
+          direction: Math.random() < 0.5 ? 'left' : 'right',
+          character: randomCharacter(),
+        })),
       };
+
+    case 'SYNC_HUMAN_COUNT': {
+      const target = getHumanCount(state.level);
+      if (target === state.humans.length) return state;
+      if (target > state.humans.length) {
+        const newHumans = [...state.humans];
+        for (let i = state.humans.length; i < target; i++) {
+          newHumans.push(createHuman(`human-${i}`));
+        }
+        return { ...state, humans: newHumans };
+      }
+      // Fewer needed (unlikely but safe)
+      return { ...state, humans: state.humans.slice(0, target) };
+    }
 
     case 'PAUSE_GAME':
       return state.status === 'playing' ? { ...state, status: 'paused' } : state;
@@ -157,8 +194,8 @@ export function useGameState() {
     dispatch({ type: 'MOVE_BIRD', x });
   }, []);
 
-  const moveHuman = useCallback((x: number, direction: 'left' | 'right') => {
-    dispatch({ type: 'MOVE_HUMAN', x, direction });
+  const moveHuman = useCallback((humanId: string, x: number, direction: 'left' | 'right') => {
+    dispatch({ type: 'MOVE_HUMAN', humanId, x, direction });
   }, []);
 
   const spawnPoop = useCallback((poop: PoopData) => {
@@ -169,8 +206,8 @@ export function useGameState() {
     dispatch({ type: 'REMOVE_POOP', id });
   }, []);
 
-  const hitHuman = useCallback((id: string) => {
-    dispatch({ type: 'HIT_HUMAN', id });
+  const hitHuman = useCallback((id: string, humanId: string) => {
+    dispatch({ type: 'HIT_HUMAN', id, humanId });
   }, []);
 
   const missHuman = useCallback((id: string) => {
@@ -189,12 +226,12 @@ export function useGameState() {
     dispatch({ type: 'FINALIZE_GAME_OVER' });
   }, []);
 
-  const startShooting = useCallback(() => {
-    dispatch({ type: 'START_SHOOTING' });
+  const startShooting = useCallback((humanId: string) => {
+    dispatch({ type: 'START_SHOOTING', humanId });
   }, []);
 
-  const stopShooting = useCallback(() => {
-    dispatch({ type: 'STOP_SHOOTING' });
+  const stopShooting = useCallback((humanId: string) => {
+    dispatch({ type: 'STOP_SHOOTING', humanId });
   }, []);
 
   const spawnBullet = useCallback((bullet: BulletData) => {
@@ -205,20 +242,24 @@ export function useGameState() {
     dispatch({ type: 'REMOVE_BULLET', id });
   }, []);
 
-  const startReaction = useCallback((reaction: HumanReaction) => {
-    dispatch({ type: 'START_REACTION', reaction });
+  const startReaction = useCallback((humanId: string, reaction: HumanReaction) => {
+    dispatch({ type: 'START_REACTION', humanId, reaction });
   }, []);
 
-  const endReaction = useCallback(() => {
-    dispatch({ type: 'END_REACTION' });
+  const endReaction = useCallback((humanId: string) => {
+    dispatch({ type: 'END_REACTION', humanId });
   }, []);
 
-  const startRespawn = useCallback(() => {
-    dispatch({ type: 'START_RESPAWN' });
+  const startRespawn = useCallback((humanId: string) => {
+    dispatch({ type: 'START_RESPAWN', humanId });
   }, []);
 
-  const finishRespawn = useCallback(() => {
-    dispatch({ type: 'FINISH_RESPAWN' });
+  const finishRespawn = useCallback((humanId: string) => {
+    dispatch({ type: 'FINISH_RESPAWN', humanId });
+  }, []);
+
+  const syncHumanCount = useCallback(() => {
+    dispatch({ type: 'SYNC_HUMAN_COUNT' });
   }, []);
 
   const pauseGame = useCallback(() => {
@@ -253,6 +294,7 @@ export function useGameState() {
     endReaction,
     startRespawn,
     finishRespawn,
+    syncHumanCount,
     pauseGame,
     resumeGame,
     resetGame,
