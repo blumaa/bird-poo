@@ -311,7 +311,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1.3;
+				CURRENT_PROJECT_VERSION = 2.1;
 				DEVELOPMENT_TEAM = KN886GDU6V;
 				INFOPLIST_FILE = App/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Bird Poo";
@@ -339,7 +339,7 @@
 				CODE_SIGN_IDENTITY = "Apple Distribution";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution";
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 1.3;
+				CURRENT_PROJECT_VERSION = 2.1;
 				DEVELOPMENT_TEAM = KN886GDU6V;
 				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = KN886GDU6V;
 				INFOPLIST_FILE = App/Info.plist;
