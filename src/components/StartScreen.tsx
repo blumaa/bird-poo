@@ -98,9 +98,9 @@ export function StartScreen({ onStart, viewBoxHeight = VIEWBOX.height }: StartSc
       {/* === Control hints — above START button === */}
       <rect
         x={cx - 140}
-        y="368"
+        y="378"
         width="280"
-        height="58"
+        height="36"
         rx="6"
         fill="#1B2A4A"
         stroke="#F5E6C8"
@@ -109,25 +109,27 @@ export function StartScreen({ onStart, viewBoxHeight = VIEWBOX.height }: StartSc
       />
       <text
         x={cx}
-        y="390"
+        y="402"
         textAnchor="middle"
         fontSize="13"
         fontFamily="Impact, 'Arial Black', sans-serif"
         fill="#F5C518"
         letterSpacing="1"
+        className="controls-desktop"
       >
         Arrow keys to fly  •  SPACE to poop
       </text>
       <text
         x={cx}
-        y="414"
+        y="402"
         textAnchor="middle"
         fontSize="13"
         fontFamily="Impact, 'Arial Black', sans-serif"
         fill="#F5C518"
         letterSpacing="1"
+        className="controls-touch"
       >
-        Mobile: tap left/right • center to poop
+        Swipe to move  •  Tap to poop
       </text>
 
       {/* === START button === */}

@@ -18,10 +18,10 @@ import { LevelUpOverlay } from './components/LevelUpOverlay';
 import { TouchZoneHints } from './components/TouchZoneHints';
 import { HudButtons } from './components/HudButtons';
 import { HighScoresModal } from './components/HighScoresModal';
-import { VIEWBOX, PLAYER_Y } from './utils/constants';
+import { VIEWBOX, PLAYER_Y, getLevelConfig } from './utils/constants';
 import { useViewBoxHeight } from './hooks/useViewBox';
 import { haptics } from './hooks/useHaptics';
-import { sfx, isMuted, setMuted } from './hooks/useSoundEffects';
+import { sfx, isMuted, setMuted, warmupAudio } from './hooks/useSoundEffects';
 import type { PoopData, BulletData, HumanData } from './types/game';
 
 export function Game() {
@@ -38,8 +38,6 @@ export function Game() {
     resetGame,
     birdHit,
     finalizeGameOver,
-    startShooting,
-    stopShooting,
     spawnBullet,
     removeBullet,
     startRespawn,
@@ -166,7 +164,7 @@ export function Game() {
     spawnPoop(poop);
   }, [spawnPoop]);
 
-  const { handleTouchStart, handleTouchEnd } = useBirdControls({
+  const { handleTouchStart, handleTouchMove, handleTouchEnd } = useBirdControls({
     birdX: state.birdX,
     ammo: state.ammo,
     isPlaying,
@@ -186,6 +184,7 @@ export function Game() {
     maxAmmo: state.maxAmmo,
     isPlaying,
     onRegen: regenAmmo,
+    regenInterval: getLevelConfig(state.level).ammoRegenInterval,
   });
 
   const handleSpawnBullet = useCallback((bullet: BulletData) => {
@@ -197,8 +196,6 @@ export function Game() {
     humans: state.humans,
     level: state.level,
     isPlaying,
-    onStartShooting: startShooting,
-    onStopShooting: stopShooting,
     onSpawnBullet: handleSpawnBullet,
   });
 
@@ -215,6 +212,7 @@ export function Game() {
   const handleBulletMiss = removeBullet;
 
   const handleStart = useCallback(() => {
+    warmupAudio(); // Unlock Web Audio on iOS (requires user gesture)
     startGame();
   }, [startGame]);
 
@@ -256,6 +254,7 @@ export function Game() {
         display: 'block',
       }}
       onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
       onTouchCancel={handleTouchEnd}
     >

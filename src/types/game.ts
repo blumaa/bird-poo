@@ -73,4 +73,5 @@ export interface LevelConfig {
   hitsRequired: number;
   minShootInterval: number;
   maxShootInterval: number;
+  ammoRegenInterval: number;
 }

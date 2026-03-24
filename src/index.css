@@ -14,3 +14,13 @@ body {
   background-color: #1a1a1a;
   overflow: hidden;
 }
+
+/* Show desktop controls by default, hide touch */
+.controls-touch { display: none; }
+.controls-desktop { display: block; }
+
+/* On touch-primary devices, swap */
+@media (pointer: coarse) {
+  .controls-touch { display: block; }
+  .controls-desktop { display: none; }
+}

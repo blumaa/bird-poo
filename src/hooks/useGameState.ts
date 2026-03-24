@@ -79,6 +79,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         levelHits: newLevelHits,
         totalHits: newTotalHits,
         level: newLevel,
+        ammo: MAX_AMMO,
         humans: updateHuman(state.humans, action.humanId, h => ({
           ...h, reaction: getRandomReaction(), state: 'walking',
         })),
@@ -226,14 +227,6 @@ export function useGameState() {
     dispatch({ type: 'FINALIZE_GAME_OVER' });
   }, []);
 
-  const startShooting = useCallback((humanId: string) => {
-    dispatch({ type: 'START_SHOOTING', humanId });
-  }, []);
-
-  const stopShooting = useCallback((humanId: string) => {
-    dispatch({ type: 'STOP_SHOOTING', humanId });
-  }, []);
-
   const spawnBullet = useCallback((bullet: BulletData) => {
     dispatch({ type: 'SPAWN_BULLET', bullet });
   }, []);
@@ -285,8 +278,6 @@ export function useGameState() {
     missHuman,
     birdHit,
     finalizeGameOver,
-    startShooting,
-    stopShooting,
     spawnBullet,
     removeBullet,
     regenAmmo,

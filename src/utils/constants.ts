@@ -14,8 +14,8 @@ export const PLAYER_WIDTH = 40;
 export const POOP_WIDTH = 20;
 export const HIT_TOLERANCE = 15;
 
-export const MAX_AMMO = 5;
-export const AMMO_REGEN_INTERVAL = 2000;
+export const MAX_AMMO = 3;
+export const AMMO_REGEN_INTERVAL = 10000;
 export const INITIAL_BIRD_LIVES = 3;
 export const HUMAN_HIT_Y = PLAYER_Y - 45; // Top of human hit zone (above head)
 
@@ -75,12 +75,19 @@ export const INITIAL_STATE: GameState = {
 // Fully formula-based: humanSpeed has no cap per spec
 export function getLevelConfig(level: number): LevelConfig {
   const l = Math.max(level, 1);
+  const humanCount = getHumanCount(l);
+  let ammoRegenInterval = AMMO_REGEN_INTERVAL; // 10000ms base
+  if (humanCount >= 4) ammoRegenInterval = 3000;
+  else if (humanCount >= 3) ammoRegenInterval = 5000;
+  else if (humanCount >= 2) ammoRegenInterval = 7000;
+
   return {
     humanSpeed:       l + 1,
     poopFallDuration: Math.max(2.0 - (l - 1) * 0.15, 0.4),
     hitsRequired:     HITS_PER_LEVEL,
-    minShootInterval: Math.max(4000 - (l - 1) * 400, 300),
-    maxShootInterval: Math.max(7000 - (l - 1) * 700, 600),
+    minShootInterval: Math.max(2000 - (l - 1) * 200, 150),
+    maxShootInterval: Math.max(3500 - (l - 1) * 350, 300),
+    ammoRegenInterval,
   };
 }
 

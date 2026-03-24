@@ -13,13 +13,26 @@ export function setMuted(value: boolean): void {
 
 function getCtx(): AudioContext {
   if (!ctx) {
-    ctx = new AudioContext();
+    // Use webkitAudioContext fallback for older iOS WebViews
+    const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+    ctx = new AudioCtx();
   }
-  // Resume if suspended (browser autoplay policy)
+  // Resume if suspended (browser/iOS autoplay policy)
   if (ctx.state === 'suspended') {
     ctx.resume();
   }
   return ctx;
+}
+
+// Must be called from a user gesture (tap/click) to unlock audio on iOS.
+// Plays a silent buffer to satisfy the WebKit autoplay policy.
+export function warmupAudio(): void {
+  const c = getCtx();
+  const buf = c.createBuffer(1, 1, c.sampleRate);
+  const src = c.createBufferSource();
+  src.buffer = buf;
+  src.connect(c.destination);
+  src.start();
 }
 
 function shouldPlay(): boolean {

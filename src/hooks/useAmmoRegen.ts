@@ -1,15 +1,14 @@
 import { useEffect, useRef } from 'react';
-import { AMMO_REGEN_INTERVAL } from '../utils/constants';
 
 interface UseAmmoRegenProps {
   ammo: number;
   maxAmmo: number;
   isPlaying: boolean;
   onRegen: () => void;
+  regenInterval: number;
 }
 
-export function useAmmoRegen({ ammo, maxAmmo, isPlaying, onRegen }: UseAmmoRegenProps) {
-  // Use refs to avoid recreating interval when these change
+export function useAmmoRegen({ ammo, maxAmmo, isPlaying, onRegen, regenInterval }: UseAmmoRegenProps) {
   const onRegenRef = useRef(onRegen);
   const ammoRef = useRef(ammo);
   const maxAmmoRef = useRef(maxAmmo);
@@ -22,12 +21,11 @@ export function useAmmoRegen({ ammo, maxAmmo, isPlaying, onRegen }: UseAmmoRegen
     if (!isPlaying) return;
 
     const interval = setInterval(() => {
-      // Check ammo inside interval to avoid recreating it
-      if (ammoRef.current < maxAmmoRef.current) {
+      if (ammoRef.current === 0) {
         onRegenRef.current();
       }
-    }, AMMO_REGEN_INTERVAL);
+    }, regenInterval);
 
     return () => clearInterval(interval);
-  }, [isPlaying]); // Only restart when isPlaying changes
+  }, [isPlaying, regenInterval]);
 }
